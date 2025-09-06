@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Row Level Security (RLS) policies for role-based data access
 - Database triggers for automated profile completion checking
 - Updated TypeScript types matching complete database schema
+- Complete CV parsing system with PDF/DOCX/TXT support
+- Intelligent text analysis and data extraction from CVs
+- CV upload component with drag-and-drop functionality
+- Parsing results UI with data validation and editing
+- API endpoint for server-side CV processing
+- Database integration for saving parsed CV data
 
 ### Changed
 - Updated app layout with AuthProvider integration

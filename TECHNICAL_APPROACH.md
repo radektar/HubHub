@@ -305,7 +305,7 @@ GET    /api/dashboard            # Role-specific dashboard data
 - [x] Next.js + Supabase project setup
 - [x] Basic authentication (email/password)  
 - [x] Database schema creation with required/optional field structure
-- [ ] CV upload and PDF parsing integration (Affinda API + fallback)
+- [x] CV upload and PDF parsing integration (Affinda API + fallback)
 - [ ] Designer profile form with required MVP fields validation
 - [ ] Survey data collection form (specialized design fields)
 - [ ] Manual data completion interface (post-CV parsing)
