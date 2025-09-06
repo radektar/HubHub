@@ -18,7 +18,7 @@ import { signInSchema, SignInFormData } from '@/lib/validations/auth'
 export function SignInForm() {
   const router = useRouter()
   const { signIn, loading, error, clearError } = useAuthStore()
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword] = useState(false)
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -122,7 +122,7 @@ export function SignInForm() {
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/auth/register" className="text-primary hover:underline">
             Sign up
           </Link>

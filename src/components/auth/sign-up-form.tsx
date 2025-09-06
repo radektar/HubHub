@@ -19,8 +19,8 @@ import { signUpSchema, SignUpFormData } from '@/lib/validations/auth'
 export function SignUpForm() {
   const router = useRouter()
   const { signUp, loading, error, clearError } = useAuthStore()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showPassword] = useState(false)
+  const [showConfirmPassword] = useState(false)
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),

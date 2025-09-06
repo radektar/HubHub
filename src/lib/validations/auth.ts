@@ -14,7 +14,7 @@ export const signUpSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
   confirmPassword: z.string(),
   role: z.enum(['designer', 'client', 'admin'], {
-    required_error: 'Please select a role',
+    message: 'Please select a role',
   }),
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',

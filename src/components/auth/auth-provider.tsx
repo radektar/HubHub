@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth-store'
 import { AuthUser } from '@/types/auth.types'
 
-const AuthContext = createContext<{}>({})
+const AuthContext = createContext<Record<string, never>>({})
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setLoading } = useAuthStore()

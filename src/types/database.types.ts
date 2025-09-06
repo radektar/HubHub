@@ -24,7 +24,7 @@ export interface DesignerProfile {
   total_experience_years: number
   rating?: number
   is_profile_complete: boolean
-  survey_data?: Record<string, any>
+  survey_data?: Record<string, unknown>
   created_at: string
   updated_at: string
 }
