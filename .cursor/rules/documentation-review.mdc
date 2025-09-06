@@ -1,0 +1,38 @@
+---
+description: Mandatory documentation review before any development task
+alwaysApply: true
+---
+
+# HubHub Project - Mandatory Documentation Review
+
+Before starting ANY development task, feature implementation, or architectural decision, you MUST:
+
+1. **READ AND UNDERSTAND** these core documentation files:
+   - @TECHNICAL_APPROACH.md - Current technical architecture, database schema, development strategy
+   - @BUSINESS_IDEA.md - Business requirements, MVP features, project scope
+   - @CHANGELOG.md - Recent changes and version history
+
+2. **VERIFY ALIGNMENT** with documented requirements and technical decisions
+3. **UPDATE DOCUMENTATION** if your task changes any architectural or business decisions
+4. **ADD CHANGELOG ENTRIES** for significant modifications
+
+## Context-First Development Rules
+
+### Before Any Code Changes:
+- Understand the complete project scope from @BUSINESS_IDEA.md
+- Review current technical architecture from @TECHNICAL_APPROACH.md
+- Check recent changes in @CHANGELOG.md that might affect implementation
+- Ensure consistency with existing database schema and MVP field requirements
+
+### During Development:
+- Respect MVP field requirements defined in @TECHNICAL_APPROACH.md
+- Follow the three-layer data collection approach (PDF parsing + manual completion + survey)
+- Maintain admin-controlled access to designer database
+- Focus on PDF CV parsing (NO LinkedIn integration)
+
+### After Development:
+- Update relevant documentation files if architectural decisions changed
+- Add changelog entries for significant modifications
+- Ensure all documentation remains consistent
+
+**CRITICAL: Always check documentation files first, then proceed with implementation while maintaining consistency with established architecture and business requirements.**

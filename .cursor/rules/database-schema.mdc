@@ -1,0 +1,30 @@
+---
+description: Database schema and MVP field requirements
+globs: ["**/*.sql", "**/*migration*", "**/*schema*", "**/*database*", "**/*supabase*"]
+---
+
+# Database Schema Rules
+
+## Core Tables Structure:
+1. `users` - Basic user authentication and roles
+2. `designer_profiles` - Main profile with required MVP fields
+3. `work_experiences` - Job history (company_name, industry required)
+4. `skills` - Skills with proficiency levels (skill_name, category, proficiency_level required)
+5. `languages` - Language skills (language_name, proficiency_level required)
+6. `educations` - Educational background (all optional for MVP)
+7. `certifications` - Professional certifications (all optional for MVP)
+8. `cv_projects` - Project portfolio (all optional for MVP)
+
+## MVP Required Fields Validation:
+- Profile must have ALL required fields completed before `is_profile_complete = true`
+- Admin can only search profiles where `is_profile_complete = true`
+- Required fields cannot be null or empty
+
+## Field Requirements:
+- **Required**: title, phone, email, availability, portfolio_url, cv_file_url, professional_summary, total_experience_years
+- **Skills Required**: At least one skill with category and proficiency_level
+- **Work History Required**: At least one company with industry classification
+- **Languages Required**: At least one language with proficiency level
+
+## Complete Schema Reference:
+See @TECHNICAL_APPROACH.md for detailed database schema with all 16 tables and relationships.

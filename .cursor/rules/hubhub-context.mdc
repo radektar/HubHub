@@ -1,0 +1,34 @@
+---
+description: HubHub project-specific context and constraints
+alwaysApply: true
+---
+
+# HubHub-Specific Context
+
+## Business Model:
+- Platform owner/admin controls designer database access
+- Clients submit projects but cannot browse full designer database
+- Admin curates candidate selection and manages offers
+- Revenue from commission fees (15-25%) and matching fees
+
+## Technical Stack:
+- Frontend: Next.js 14 + TypeScript + Tailwind CSS
+- Backend: Supabase (PostgreSQL + Auth + Storage)
+- CV Parsing: Affinda API or Resume Parser API
+- Focus: PDF CV parsing + manual completion (NO LinkedIn integration)
+
+## MVP Required Fields:
+- Core Profile: title, phone, email, availability, portfolio_url, cv_file_url, professional_summary, total_experience_years
+- Skills: skill_name, category, proficiency_level (1-5)
+- Work History: company_name, industry
+- Languages: language_name, proficiency_level (1-5)
+
+## Database Schema:
+- 16 tables with clear required vs optional field designations
+- Profile completion validation with `is_profile_complete` flag
+- Admin can only include designers with complete profiles in searches
+
+## Development Phases:
+- Phase 1 (Weeks 1-3): PoC Foundation - PDF parsing + manual completion + survey integration
+- Phase 2 (Weeks 4-6): Core Features - Admin matching + client portal + offers
+- Phase 3 (Weeks 7-8): PoC Completion - Polish + analytics + demo prep
