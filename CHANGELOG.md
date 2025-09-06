@@ -8,33 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project documentation structure
-- Business idea and requirements documentation template
-- Technical approach and architecture documentation template
-- Comprehensive database schema with MVP field requirements
-- Designer profile survey structure and data collection strategy
-- Project development rules requiring documentation review before tasks
-- Next.js 14 project setup with TypeScript and App Router
-- Supabase integration with modern @supabase/ssr package
-- Tailwind CSS + shadcn/ui component system
-- Zustand state management setup
-- React Hook Form + Zod validation integration
-- Project structure with types, stores, and Supabase configuration
 
 ### Changed
-- Updated technical approach to focus on PDF CV parsing (removed LinkedIn integration)
-- Refined business model to emphasize admin-controlled designer database access
-- Enhanced development strategy with three-layer data collection approach
 
 ### Deprecated
 
 ### Removed
-- LinkedIn integration from technical approach (scope reduction for MVP)
 
 ### Fixed
-- Aligned development strategy with current MVP scope and requirements
 
 ### Security
+
+## [0.2.0] - 2025-09-06
+
+### Added
+- Next.js 14 project setup with TypeScript and App Router
+- Supabase integration with modern @supabase/ssr package
+- Tailwind CSS + shadcn/ui component system (button, input, form, card, label, textarea, select)
+- Zustand state management setup with auth store
+- React Hook Form + Zod validation integration
+- Project structure with types, stores, and Supabase configuration
+- Database types based on TECHNICAL_APPROACH.md schema
+- Comprehensive Cursor rules for AI development guidance
+- Environment configuration files for API keys and secrets
+
+### Changed
+- Fixed Supabase server client configuration for Next.js 15 compatibility
+- Updated project structure to follow modern Next.js App Router patterns
+
+### Fixed
+- Resolved Next.js module loading issues during initial setup
+- Fixed TypeScript errors in Supabase server configuration
 
 ## [0.1.0] - 2025-09-06
 
@@ -50,4 +54,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v0.2.0** (2025-09-06): Phase 1 Step 1 - Next.js + Supabase project setup complete
 - **v0.1.0** (2025-09-06): Initial project setup and documentation structure
