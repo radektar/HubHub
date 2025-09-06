@@ -302,8 +302,8 @@ GET    /api/dashboard            # Role-specific dashboard data
 ## Development Strategy
 
 ### Phase 1: PoC Foundation (Weeks 1-3)
-- [ ] Next.js + Supabase project setup
-- [ ] Basic authentication (email/password)  
+- [x] Next.js + Supabase project setup
+- [x] Basic authentication (email/password)  
 - [ ] Database schema creation with required/optional field structure
 - [ ] CV upload and PDF parsing integration (Affinda API + fallback)
 - [ ] Designer profile form with required MVP fields validation
