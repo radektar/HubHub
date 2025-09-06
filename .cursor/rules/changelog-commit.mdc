@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+description: Ensure CHANGELOG.md is updated before every commit
+---
+
+# Changelog Update Rule
+
+## MANDATORY: Update CHANGELOG.md Before Every Commit
+
+Before creating any commit, you MUST:
+
+1. **Update [CHANGELOG.md](mdc:CHANGELOG.md)** in the `[Unreleased]` section
+2. **Add appropriate entries** under the correct category:
+   - `### Added` - New features, components, or functionality
+   - `### Changed` - Changes to existing functionality
+   - `### Fixed` - Bug fixes and corrections
+   - `### Removed` - Removed features or deprecated functionality
+   - `### Security` - Security-related changes
+
+## Changelog Entry Format
+
+### For Feature Commits (`feat:`):
+- Add entry under `### Added`
+- Be specific about what was implemented
+- Reference relevant files or components
+
+### For Bug Fix Commits (`fix:`):
+- Add entry under `### Fixed` 
+- Describe what was broken and how it was resolved
+
+### For Documentation Commits (`docs:`):
+- Add entry under `### Added` or `### Changed` as appropriate
+- Mention documentation updates or improvements
+
+### For Refactor/Style Commits:
+- Add entry under `### Changed`
+- Describe structural or code quality improvements
+
+## Example Changelog Entries:
+```markdown
+### Added
+- User authentication system with email/password login
+- Designer profile creation form with CV upload functionality
+- Database schema for MVP required fields validation
+
+### Fixed
+- Resolved Next.js module loading issues during development
+- Fixed TypeScript errors in Supabase server configuration
+```
+
+## Commit Process:
+1. **Make your code changes**
+2. **Update [CHANGELOG.md](mdc:CHANGELOG.md)** with appropriate entries
+3. **Stage both code changes AND changelog**: `git add .`
+4. **Create commit** with descriptive message
+5. **Verify changelog was included** in the commit
+
+## CRITICAL: Never commit without updating the changelog!
+Every commit should reflect its changes in [CHANGELOG.md](mdc:CHANGELOG.md) to maintain proper project history and version tracking.

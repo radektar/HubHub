@@ -8,8 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Cursor rule for mandatory CHANGELOG.md updates before commits
+- Complete authentication system with email/password login
+- User registration with role selection (designer/client/admin)
+- Zustand auth store with Supabase integration
+- Authentication middleware for route protection
+- Role-based access control and dashboard routing
+- Sign-in and sign-up forms with React Hook Form + Zod validation
+- AuthProvider for session management across the app
+- Protected dashboard with role-specific content
+- Updated home page with HubHub branding and call-to-action
 
 ### Changed
+- Updated app layout with AuthProvider integration
+- Enhanced app metadata with HubHub branding
 
 ### Deprecated
 
@@ -18,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+- Implemented secure authentication with Supabase
+- Added route protection middleware
+- Role-based access control for sensitive areas
 
 ## [0.2.0] - 2025-09-06
 
