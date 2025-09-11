@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Git pre-commit hook to enforce CHANGELOG.md updates on main branch commits
+- Changelog update helper script (scripts/update-changelog.sh) for easier entry management
+- Automated commit blocking when CHANGELOG.md is not updated
+
 ## [0.3.0] - 2025-09-11
 
 ### Added
