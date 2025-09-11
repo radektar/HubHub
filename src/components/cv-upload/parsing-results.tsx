@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Edit2, User, Briefcase, GraduationCap, Award, Code, Globe } from 'lucide-react'
+import { Check, X, Edit2, User, Briefcase, GraduationCap, Code, Globe } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

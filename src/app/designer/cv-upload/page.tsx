@@ -84,17 +84,7 @@ function mapToDatabase(parsedData: ParsedCVData, userId: string) {
       issuing_organization: cert.issuer,
       issue_date: cert.date ? new Date(cert.date) : null,
       credential_url: cert.url
-    })) || [],
-
-    // Education
-    educations: parsedData.education.map(edu => ({
-      institution_name: edu.institution,
-      degree_type: edu.degree,
-      start_date: edu.startDate ? new Date(edu.startDate) : null,
-      end_date: edu.endDate ? new Date(edu.endDate) : null,
-      gpa: edu.gpa ? parseFloat(edu.gpa) : null,
-      honors: edu.honors || []
-    }))
+    })) || []
   }
 }
 
@@ -139,7 +129,7 @@ export default function CVUploadPage() {
   const [currentStep, setCurrentStep] = useState<UploadStep>(UploadStep.UPLOAD)
   const [parsingResult, setParsingResult] = useState<CVParserResult | null>(null)
   const [parsedData, setParsedData] = useState<ParsedCVData | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const [, setIsSaving] = useState(false)
 
   const handleParsingStart = () => {
     setParsingResult(null)

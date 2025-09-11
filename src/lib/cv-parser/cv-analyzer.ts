@@ -63,7 +63,7 @@ export class CVAnalyzer {
    * Extract personal information
    */
   private extractPersonalInfo() {
-    const personal: any = {}
+    const personal: Record<string, unknown> = {}
     
     // Extract email
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g
@@ -127,8 +127,18 @@ export class CVAnalyzer {
   /**
    * Extract work experience
    */
-  private extractWorkExperience() {
-    const experiences: any[] = []
+  private extractWorkExperience(): Array<{
+    jobTitle?: string
+    company?: string
+    location?: string
+    startDate?: string
+    endDate?: string
+    isCurrent?: boolean
+    description?: string
+    achievements?: string[]
+    technologies?: string[]
+  }> {
+    const experiences: Record<string, unknown>[] = []
     const experienceKeywords = ['experience', 'employment', 'work history', 'career', 'professional']
     
     let startIndex = -1
@@ -142,7 +152,7 @@ export class CVAnalyzer {
 
     if (startIndex === -1) return experiences
 
-    let currentExperience: any = {}
+    let currentExperience: Record<string, unknown> = {}
     
     for (let i = startIndex; i < this.lines.length; i++) {
       const line = this.lines[i]
@@ -179,8 +189,15 @@ export class CVAnalyzer {
     }
 
     return experiences.map(exp => ({
-      ...exp,
-      description: exp.description?.trim()
+      jobTitle: exp.jobTitle as string | undefined,
+      company: exp.company as string | undefined,
+      location: exp.location as string | undefined,
+      startDate: exp.startDate as string | undefined,
+      endDate: exp.endDate as string | undefined,
+      isCurrent: exp.isCurrent as boolean | undefined,
+      description: typeof exp.description === 'string' ? exp.description.trim() : exp.description as string | undefined,
+      achievements: exp.achievements as string[] | undefined,
+      technologies: exp.technologies as string[] | undefined
     }))
   }
 
@@ -188,7 +205,7 @@ export class CVAnalyzer {
    * Extract education
    */
   private extractEducation() {
-    const educations: any[] = []
+    const educations: Record<string, unknown>[] = []
     const educationKeywords = ['education', 'academic', 'university', 'college', 'degree']
     
     let startIndex = -1
@@ -202,7 +219,7 @@ export class CVAnalyzer {
 
     if (startIndex === -1) return educations
 
-    let currentEducation: any = {}
+    let currentEducation: Record<string, unknown> = {}
     
     for (let i = startIndex; i < this.lines.length; i++) {
       const line = this.lines[i]
@@ -292,13 +309,13 @@ export class CVAnalyzer {
    * Extract certifications
    */
   private extractCertifications() {
-    const certifications: any[] = []
+    const certifications: Record<string, unknown>[] = []
     const certKeywords = ['certification', 'certificate', 'certified', 'license']
     
     for (let i = 0; i < this.lines.length; i++) {
       const line = this.lines[i].toLowerCase()
       if (certKeywords.some(keyword => line.includes(keyword))) {
-        const cert: any = { name: this.lines[i] }
+        const cert: Record<string, unknown> = { name: this.lines[i] }
         
         // Look for dates in the same or next line
         if (this.containsDate(line)) {
@@ -317,7 +334,7 @@ export class CVAnalyzer {
    * Extract projects
    */
   private extractProjects() {
-    const projects: any[] = []
+    const projects: Record<string, unknown>[] = []
     const projectKeywords = ['project', 'portfolio']
     
     let startIndex = -1
@@ -347,7 +364,7 @@ export class CVAnalyzer {
    * Extract awards
    */
   private extractAwards() {
-    const awards: any[] = []
+    const awards: Record<string, unknown>[] = []
     const awardKeywords = ['award', 'honor', 'recognition', 'achievement']
     
     for (let i = 0; i < this.lines.length; i++) {
@@ -364,7 +381,7 @@ export class CVAnalyzer {
    * Extract publications
    */
   private extractPublications() {
-    const publications: any[] = []
+    const publications: Record<string, unknown>[] = []
     const pubKeywords = ['publication', 'paper', 'article', 'journal']
     
     for (let i = 0; i < this.lines.length; i++) {
@@ -395,7 +412,7 @@ export class CVAnalyzer {
     return eduKeywords.some(keyword => line.toLowerCase().includes(keyword))
   }
 
-  private parseJobLine(line: string): any {
+  private parseJobLine(line: string): Record<string, unknown> {
     const parts = line.split(/\s+(?:at|@|-|\|)\s+/)
     return {
       jobTitle: parts[0]?.trim(),
@@ -403,7 +420,7 @@ export class CVAnalyzer {
     }
   }
 
-  private parseEducationLine(line: string): any {
+  private parseEducationLine(line: string): Record<string, unknown> {
     return {
       degree: line.includes('bachelor') || line.includes('master') || line.includes('phd') ? line : undefined,
       institution: line
@@ -434,9 +451,9 @@ export class CVAnalyzer {
       .filter(skill => skill.length > 1 && skill.length < 30)
   }
 
-  private calculateConfidence(personal: any, workExperience: any[], education: any[], skills: any): number {
+  private calculateConfidence(personal: Record<string, unknown>, workExperience: Record<string, unknown>[], education: Record<string, unknown>[], skills: Record<string, unknown>): number {
     let score = 0
-    let maxScore = 10
+    const maxScore = 10
 
     // Personal info scoring
     if (personal.name) score += 2
@@ -451,8 +468,9 @@ export class CVAnalyzer {
     if (education.length > 0) score += 1
 
     // Skills scoring
-    const totalSkills = (skills.technical?.length || 0) + (skills.design?.length || 0) + 
-                       (skills.tools?.length || 0) + (skills.soft?.length || 0)
+    const skillsTyped = skills as { technical?: string[]; design?: string[]; tools?: string[]; soft?: string[] }
+    const totalSkills = (skillsTyped.technical?.length || 0) + (skillsTyped.design?.length || 0) + 
+                       (skillsTyped.tools?.length || 0) + (skillsTyped.soft?.length || 0)
     if (totalSkills > 0) score += 1
 
     return Math.min(score / maxScore, 1)

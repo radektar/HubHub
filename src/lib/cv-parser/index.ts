@@ -211,14 +211,14 @@ export class CVParser {
   }
 
   // Helper methods
-  private static calculateTotalExperience(workExperience: any[]): number {
+  private static calculateTotalExperience(workExperience: Record<string, unknown>[]): number {
     if (workExperience.length === 0) return 0
 
     let totalMonths = 0
     for (const exp of workExperience) {
-      if (exp.startDate) {
+      if (exp.startDate && typeof exp.startDate === 'string') {
         const start = new Date(exp.startDate)
-        const end = exp.endDate && exp.endDate !== 'present' ? new Date(exp.endDate) : new Date()
+        const end = exp.endDate && exp.endDate !== 'present' && typeof exp.endDate === 'string' ? new Date(exp.endDate) : new Date()
         const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth())
         totalMonths += Math.max(months, 0)
       }

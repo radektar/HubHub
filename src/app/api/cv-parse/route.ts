@@ -8,7 +8,7 @@ import * as os from 'os'
 import { AIParser } from '@/lib/cv-parser/ai-parser'
 
 // Import PDF text extraction
-const pdfExtract = require('pdf-text-extract')
+import pdfExtract from 'pdf-text-extract'
 
 export async function POST(request: NextRequest) {
   console.log('🚀 CV Parse API called')
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log('📝 Using enhanced regex parsing...')
         const aiParser = new AIParser()
-        parsedData = (aiParser as any).parseWithRegex(extractedText)
+        parsedData = (aiParser as unknown as { parseWithRegex: (text: string) => unknown }).parseWithRegex(extractedText)
       }
     } catch (error) {
       console.error('⚠️ Advanced parsing failed, using basic parsing:', error)
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     const result = {
       success: true,
       data: {
-        ...parsedData,
+        ...(parsedData as Record<string, unknown>),
         rawText: extractedText,
         confidence: parsingMethod === 'ai' ? 0.95 : parsingMethod === 'regex' ? 0.85 : 0.7,
         errors: [],
@@ -222,13 +222,13 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
     
     // Extract text using pdf-text-extract
     const extractPromise = promisify(pdfExtract)
-    const pages = await extractPromise(tempFilePath, { splitPages: false })
+    const pages = await extractPromise(tempFilePath)
     
     // Clean up temporary file
     fs.unlinkSync(tempFilePath)
     console.log('🗑️ Temporary file cleaned up')
     
-    const extractedText = Array.isArray(pages) ? pages.join('\n') : pages || ''
+    const extractedText = Array.isArray(pages) ? pages.join('\n') : String(pages || '')
     console.log('✅ PDF text extraction completed, length:', extractedText.length)
     
     return extractedText.trim() || 'No text content found in PDF'

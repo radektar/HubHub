@@ -17,7 +17,7 @@ export default function TestCVParserPage() {
   const [currentStep, setCurrentStep] = useState<TestStep>(TestStep.UPLOAD)
   const [parsingResult, setParsingResult] = useState<CVParserResult | null>(null)
   const [parsedData, setParsedData] = useState<ParsedCVData | null>(null)
-  const [testResults, setTestResults] = useState<any[]>([])
+  const [testResults, setTestResults] = useState<unknown[]>([])
 
   const handleParsingStart = () => {
     setParsingResult(null)
@@ -211,32 +211,30 @@ export default function TestCVParserPage() {
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {testResults.map((result, index) => (
+                    {testResults.map((result, index) => {
+                      const testResult = result as { success: boolean; timestamp: string; fileName: string; processingTime: number }
+                      return (
                       <div key={index} className="border rounded-lg p-3 text-sm">
                         <div className="flex justify-between items-center mb-2">
                           <Badge 
-                            variant={result.success ? "default" : "destructive"}
+                            variant={testResult.success ? "default" : "destructive"}
                             className="text-xs"
                           >
-                            {result.success ? "Success" : "Failed"}
+                            {testResult.success ? "Success" : "Failed"}
                           </Badge>
                           <span className="text-xs text-gray-500">
-                            {new Date(result.timestamp).toLocaleTimeString()}
+                            {new Date(testResult.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
                         
-                        {result.success && (
+                        {testResult.success && (
                           <div className="space-y-1 text-xs text-gray-600">
-                            <div>Confidence: {Math.round(result.confidence * 100)}%</div>
-                            <div>Time: {result.processingTime}ms</div>
-                            <div>Name: {result.personalInfo.name || 'Not found'}</div>
-                            <div>Email: {result.personalInfo.email || 'Not found'}</div>
-                            <div>Work Exp: {result.workExperience}</div>
-                            <div>Skills: {result.skills}</div>
+                            <div>Processing Time: {testResult.processingTime}ms</div>
+                            <div>File: {testResult.fileName}</div>
                           </div>
                         )}
                       </div>
-                    ))}
+                    })}
                   </div>
                 )}
               </CardContent>

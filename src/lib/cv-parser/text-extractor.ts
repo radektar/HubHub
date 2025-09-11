@@ -1,6 +1,6 @@
 // Text Extraction from different file formats
 
-import * as pdfjs from 'pdfjs-dist'
+import * as mammoth from 'mammoth'
 
 export interface ExtractedText {
   content: string
@@ -12,42 +12,16 @@ export class TextExtractor {
    * Extract text from PDF files using pdfjs-dist
    */
   static async extractFromPDF(buffer: Buffer): Promise<ExtractedText> {
-    try {
-      // Configure pdfjs worker
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
-      
-      // Load PDF document
-      const loadingTask = pdfjs.getDocument({
-        data: buffer,
-        useSystemFonts: true
-      })
-      
-      const pdf = await loadingTask.promise
-      let fullText = ''
-      
-      // Extract text from each page
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum)
-        const textContent = await page.getTextContent()
-        
-        // Combine text items
-        const pageText = textContent.items
-          .map((item: { str: string }) => item.str)
-          .join(' ')
-        
-        fullText += pageText + '\n'
+    // PDF extraction is handled server-side via API route
+    console.log('📄 PDF extraction called - this should be handled server-side')
+    
+    return {
+      content: 'PDF extraction should be handled via API route /api/cv-parse',
+      metadata: {
+        note: 'Client-side PDF extraction not implemented',
+        size: buffer.length,
+        type: 'pdf'
       }
-      
-      return {
-        content: fullText.trim(),
-        metadata: {
-          pages: pdf.numPages,
-          size: buffer.length,
-          type: 'pdf'
-        }
-      }
-    } catch (error) {
-      throw new Error(`PDF parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

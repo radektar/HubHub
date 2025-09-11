@@ -160,11 +160,16 @@ Return valid JSON only:
         summary: this.extractSummary(text)
       },
       workExperience: this.extractWorkExperience(text),
-      skills: this.extractSkills(text),
-      languages: this.extractLanguages(text),
+      skills: {
+        ...this.extractSkills(text),
+        languages: this.extractLanguages(text)
+      },
       education: this.extractEducation(text),
       certifications: this.extractCertifications(text),
-      projects: this.extractProjects(text)
+      projects: this.extractProjects(text),
+      rawText: text,
+      confidence: 0.7,
+      errors: []
     }
   }
 
