@@ -1,0 +1,50 @@
+John Doe
+Senior UX/UI Designer
+Email: john.doe@example.com
+Phone: +1-555-0123
+Location: New York, NY
+Portfolio: https://johndoe.design
+
+PROFESSIONAL SUMMARY
+Experienced UX/UI designer with 5+ years of expertise in creating user-centered digital experiences. Proficient in design thinking, prototyping, and collaboration with cross-functional teams.
+
+WORK EXPERIENCE
+
+Senior UX Designer at TechCorp Inc
+January 2022 - Present
+• Led design for mobile app serving 100K+ users
+• Collaborated with product managers and developers
+• Conducted user research and usability testing
+• Technologies: Figma, Sketch, Adobe Creative Suite
+
+UX Designer at StartupXYZ
+March 2020 - December 2021
+• Designed web applications for B2B clients
+• Created wireframes and interactive prototypes
+• Improved user engagement by 30%
+
+Junior Designer at Design Studio
+June 2019 - February 2020
+• Supported senior designers on various projects
+• Created visual designs and style guides
+
+EDUCATION
+
+Bachelor of Arts in Graphic Design
+University of Arts, 2019
+GPA: 3.8/4.0
+
+SKILLS
+Technical: Figma, Sketch, Adobe Creative Suite, HTML, CSS, JavaScript
+Design: User Research, Wireframing, Prototyping, Visual Design
+Soft: Communication, Collaboration, Problem Solving
+
+LANGUAGES
+English: Native
+Spanish: Intermediate
+French: Basic
+
+CERTIFICATIONS
+Google UX Design Certificate - 2021
+Adobe Certified Expert - 2020
+

@@ -1,26 +1,49 @@
 // Text Extraction from different file formats
 
-import pdfParse from 'pdf-parse'
-import mammoth from 'mammoth'
+import * as pdfjs from 'pdfjs-dist'
 
 export interface ExtractedText {
   content: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export class TextExtractor {
   /**
-   * Extract text from PDF files
+   * Extract text from PDF files using pdfjs-dist
    */
   static async extractFromPDF(buffer: Buffer): Promise<ExtractedText> {
     try {
-      const data = await pdfParse(buffer)
+      // Configure pdfjs worker
+      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+      
+      // Load PDF document
+      const loadingTask = pdfjs.getDocument({
+        data: buffer,
+        useSystemFonts: true
+      })
+      
+      const pdf = await loadingTask.promise
+      let fullText = ''
+      
+      // Extract text from each page
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum)
+        const textContent = await page.getTextContent()
+        
+        // Combine text items
+        const pageText = textContent.items
+          .map((item: { str: string }) => item.str)
+          .join(' ')
+        
+        fullText += pageText + '\n'
+      }
+      
       return {
-        content: data.text,
+        content: fullText.trim(),
         metadata: {
-          pages: data.numpages,
-          info: data.info,
-          version: data.version
+          pages: pdf.numPages,
+          size: buffer.length,
+          type: 'pdf'
         }
       }
     } catch (error) {
