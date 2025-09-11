@@ -214,26 +214,27 @@ export default function TestCVParserPage() {
                     {testResults.map((result, index) => {
                       const testResult = result as { success: boolean; timestamp: string; fileName: string; processingTime: number }
                       return (
-                      <div key={index} className="border rounded-lg p-3 text-sm">
-                        <div className="flex justify-between items-center mb-2">
-                          <Badge 
-                            variant={testResult.success ? "default" : "destructive"}
-                            className="text-xs"
-                          >
-                            {testResult.success ? "Success" : "Failed"}
-                          </Badge>
-                          <span className="text-xs text-gray-500">
-                            {new Date(testResult.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        
-                        {testResult.success && (
-                          <div className="space-y-1 text-xs text-gray-600">
-                            <div>Processing Time: {testResult.processingTime}ms</div>
-                            <div>File: {testResult.fileName}</div>
+                        <div key={index} className="border rounded-lg p-3 text-sm">
+                          <div className="flex justify-between items-center mb-2">
+                            <Badge 
+                              variant={testResult.success ? "default" : "destructive"}
+                              className="text-xs"
+                            >
+                              {testResult.success ? "Success" : "Failed"}
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              {new Date(testResult.timestamp).toLocaleTimeString()}
+                            </span>
                           </div>
-                        )}
-                      </div>
+                          
+                          {testResult.success && (
+                            <div className="space-y-1 text-xs text-gray-600">
+                              <div>Processing Time: {testResult.processingTime}ms</div>
+                              <div>File: {testResult.fileName}</div>
+                            </div>
+                          )}
+                        </div>
+                      )
                     })}
                   </div>
                 )}

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-09-11
+
 ### Added
 - Cursor rule for mandatory CHANGELOG.md updates before commits
 - Complete authentication system with email/password login
@@ -99,5 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v0.3.0** (2025-09-11): Phase 1 Steps 1-4 complete - AI-powered CV parsing system with 95% accuracy
 - **v0.2.0** (2025-09-06): Phase 1 Step 1 - Next.js + Supabase project setup complete
 - **v0.1.0** (2025-09-06): Initial project setup and documentation structure
