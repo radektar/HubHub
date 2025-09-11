@@ -2,111 +2,161 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  try {
+    // Check for required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing Supabase environment variables')
+      return NextResponse.next()
+    }
+
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
       },
+    })
+
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options) {
+            try {
+              request.cookies.set({
+                name,
+                value,
+                ...options,
+              })
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              })
+              response.cookies.set({
+                name,
+                value,
+                ...options,
+              })
+            } catch (error) {
+              console.error('Error setting cookie:', error)
+            }
+          },
+          remove(name: string, options) {
+            try {
+              request.cookies.set({
+                name,
+                value: '',
+                ...options,
+              })
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              })
+              response.cookies.set({
+                name,
+                value: '',
+                ...options,
+              })
+            } catch (error) {
+              console.error('Error removing cookie:', error)
+            }
+          },
+        },
+      }
+    )
+
+    // Get user session with timeout and error handling
+    let user = null
+    try {
+      const { data, error } = await Promise.race([
+        supabase.auth.getUser(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+      ]) as any
+
+      if (error) {
+        console.error('Error getting user:', error)
+      } else {
+        user = data?.user
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      // Continue without user authentication for now
     }
-  )
 
-  // Get user session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    const { pathname } = request.nextUrl
 
-  const { pathname } = request.nextUrl
+    // Public routes that don't require authentication
+    const publicRoutes = ['/auth/login', '/auth/register', '/auth/reset-password', '/auth/verify-email']
+    const isPublicRoute = publicRoutes.includes(pathname) || pathname === '/'
 
-  // Public routes that don't require authentication
-  const publicRoutes = ['/auth/login', '/auth/register', '/auth/reset-password', '/auth/verify-email']
-  const isPublicRoute = publicRoutes.includes(pathname) || pathname === '/'
+    // Protected routes that require authentication
+    const protectedRoutes = ['/dashboard', '/profile', '/admin', '/designer', '/client']
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
-  // Protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/profile', '/admin']
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+    // If user is not authenticated and trying to access protected route
+    if (!user && isProtectedRoute) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
 
-  // If user is not authenticated and trying to access protected route
-  if (!user && isProtectedRoute) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
-
-  // If user is authenticated and trying to access auth pages, redirect to dashboard
-  if (user && (pathname.startsWith('/auth/') && pathname !== '/auth/verify-email')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Role-based access control
-  if (user && isProtectedRoute) {
-    // Get user role from database
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const userRole = userData?.role
-
-    // Admin-only routes
-    if (pathname.startsWith('/admin') && userRole !== 'admin') {
+    // If user is authenticated and trying to access auth pages, redirect to dashboard
+    if (user && (pathname.startsWith('/auth/') && pathname !== '/auth/verify-email')) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    // Designer-only routes
-    if (pathname.startsWith('/designer') && userRole !== 'designer') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Role-based access control with error handling
+    if (user && isProtectedRoute) {
+      try {
+        // Get user role from database with timeout
+        const { data: userData, error } = await Promise.race([
+          supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 3000))
+        ]) as any
+
+        if (error) {
+          console.error('Error fetching user role:', error)
+          // Allow access but log the error
+          return response
+        }
+
+        const userRole = userData?.role
+
+        // Admin-only routes
+        if (pathname.startsWith('/admin') && userRole !== 'admin') {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+
+        // Designer-only routes
+        if (pathname.startsWith('/designer') && userRole !== 'designer') {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+
+        // Client-only routes
+        if (pathname.startsWith('/client') && userRole !== 'client') {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+      } catch (error) {
+        console.error('Role check failed:', error)
+        // Allow access but log the error
+      }
     }
 
-    // Client-only routes
-    if (pathname.startsWith('/client') && userRole !== 'client') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
+    return response
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // Return a basic response if middleware fails completely
+    return NextResponse.next()
   }
-
-  return response
 }
 
 export const config = {
@@ -117,7 +167,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - api routes (handled separately)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

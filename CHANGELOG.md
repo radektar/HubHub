@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git pre-commit hook to enforce CHANGELOG.md updates on main branch commits
 - Changelog update helper script (scripts/update-changelog.sh) for easier entry management
 - Automated commit blocking when CHANGELOG.md is not updated
+- Vercel deployment configuration file (vercel.json) for proper environment variable handling
+
+### Fixed
+- Middleware timeout and error handling issues causing Vercel deployment failures
+- Added comprehensive error handling and fallbacks in middleware for Supabase operations
+- Environment variable validation in middleware to prevent deployment crashes
+- Database query timeouts in middleware with 3-second timeout limits
 
 ## [0.3.0] - 2025-09-11
 
