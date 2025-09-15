@@ -354,6 +354,8 @@ export default function CVUploadPage() {
             onDataUpdate={handleDataUpdate}
             onConfirm={handleConfirm}
             onReject={handleReject}
+            showSaveButton={true}
+            cvFileUrl="uploaded-cv-file"
           />
         )}
 

@@ -92,10 +92,12 @@ export default function TestCVParserPage() {
               <h1 className="text-3xl font-bold text-gray-900">CV Parser Test Environment</h1>
               <p className="text-gray-600 mt-2">
                 Test CV parsing functionality without authentication. Upload CVs and verify extraction accuracy.
+                <br />
+                <strong>Note:</strong> For database saving, use the authenticated designer flow at <code>/designer/cv-upload</code>
               </p>
             </div>
             <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
-              🧪 TEST MODE
+              🧪 TEST MODE - NO DATABASE
             </Badge>
           </div>
         </div>
