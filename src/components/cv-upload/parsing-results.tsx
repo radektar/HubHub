@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Edit2, User, Briefcase, GraduationCap, Code, Globe, Star } from 'lucide-react'
+import { Check, X, Edit2, User, Briefcase, GraduationCap, Code, Globe, Star, Save, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -28,11 +28,15 @@ interface ParsingResultsProps {
   onDataUpdate: (updatedData: ParsedCVData) => void
   onConfirm: () => void
   onReject: () => void
+  cvFileUrl?: string // Optional CV file URL for saving to database
+  showSaveButton?: boolean // Whether to show the save to database button
 }
 
-export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject }: ParsingResultsProps) {
+export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, cvFileUrl, showSaveButton = false }: ParsingResultsProps) {
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [localData, setLocalData] = useState<ParsedCVData>(parsedData)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   
   // MVP required fields state
   const [mvpData, setMvpData] = useState<MVPData>({
@@ -60,6 +64,75 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject }
     const updated = { ...mvpData, [field]: value }
     setMvpData(updated)
     // Note: MVP data is separate from ParsedCVData, handled in component state
+  }
+
+  // Save profile to database
+  const handleSaveProfile = async () => {
+    if (isSaving) return
+    
+    setIsSaving(true)
+    setSaveMessage(null)
+    
+    try {
+      const profileCompletionData = {
+        personal: {
+          name: localData.personal.name,
+          email: localData.personal.email || '',
+          phone: localData.personal.phone || '',
+          location: localData.personal.location,
+          portfolio: localData.personal.portfolio,
+          linkedin: localData.personal.linkedin,
+          summary: localData.personal.summary || ''
+        },
+        mvpData: mvpData,
+        workExperience: localData.workExperience.map(exp => ({
+          jobTitle: exp.jobTitle,
+          company: exp.company,
+          industry: exp.industry || 'Other',
+          location: exp.location,
+          startDate: exp.startDate,
+          endDate: exp.endDate,
+          isCurrent: exp.isCurrent,
+          description: exp.description,
+          achievements: exp.achievements,
+          technologies: exp.technologies
+        })),
+        skills: localData.skills,
+        education: localData.education,
+        cvFileUrl: cvFileUrl
+      }
+      
+      const response = await fetch('/api/designer/profile-complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profileCompletionData)
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setSaveMessage({
+          type: 'success',
+          text: `Profile saved successfully! ${result.isComplete ? 'Profile is complete ✅' : `${result.completionPercentage}% complete`}`
+        })
+      } else {
+        setSaveMessage({
+          type: 'error',
+          text: result.error || 'Failed to save profile'
+        })
+      }
+      
+    } catch (error) {
+      console.error('Profile save error:', error)
+      setSaveMessage({
+        type: 'error',
+        text: 'Network error while saving profile'
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const addWorkExperience = () => {
@@ -670,18 +743,51 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject }
         </Card>
       )}
 
+      {/* Save Message */}
+      {saveMessage && (
+        <div className={`p-3 rounded-lg text-sm ${
+          saveMessage.type === 'success' 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {saveMessage.text}
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex justify-between">
         <Button variant="outline" onClick={onReject}>
           Start Over
         </Button>
-        <Button 
-          onClick={onConfirm}
-          disabled={!validation.isValid}
-          className="min-w-[120px]"
-        >
-          Confirm & Save
-        </Button>
+        <div className="flex gap-2">
+          {showSaveButton && (
+            <Button 
+              onClick={handleSaveProfile}
+              disabled={isSaving || !validation.isValid}
+              variant="secondary"
+              className="min-w-[140px]"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save to Database
+                </>
+              )}
+            </Button>
+          )}
+          <Button 
+            onClick={onConfirm}
+            disabled={!validation.isValid}
+            className="min-w-[120px]"
+          >
+            Confirm & Save
+          </Button>
+        </div>
       </div>
     </div>
   )
