@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Edit2, User, Briefcase, GraduationCap, Code, Globe, Star, StarIcon } from 'lucide-react'
+import { Check, X, Edit2, User, Briefcase, GraduationCap, Code, Globe, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,165 +9,19 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ParsedCVData } from '@/lib/cv-parser/types'
+import { 
+  validateProfileCompletion,
+  DESIGN_TITLES,
+  AVAILABILITY_OPTIONS,
+  INDUSTRIES,
+  calculateTotalExperience,
+  type MVPData,
+  type ValidationResult
+} from '@/lib/validation'
 
-// Constants for dropdowns
-const DESIGN_TITLES = [
-  'UX Designer',
-  'UI Designer', 
-  'Product Designer',
-  'UX/UI Designer',
-  'Visual Designer',
-  'Interaction Designer',
-  'Service Designer',
-  'Design Lead',
-  'Senior Designer',
-  'Junior Designer',
-  'Design Manager',
-  'Creative Director',
-  'Other'
-]
+// Note: Constants and utility functions moved to @/lib/validation
 
-const AVAILABILITY_OPTIONS = [
-  'Available',
-  'Busy',
-  'Not Available'
-]
-
-const INDUSTRIES = [
-  'Automotive', 'Energy', 'IT', 'Finance', 'Insurance', 'Banking', 
-  'Healthcare', 'Startups', 'Blockchain/Crypto', 'AdTech/MarTech', 
-  'Manufacturing', 'Construction', 'eCommerce', 'Education', 
-  'Transport/Logistics', 'Agriculture', 'Tourism/Hospitality', 
-  'Telecommunications', 'Green Tech', 'HR', 'Other'
-]
-
-// Helper function to calculate total experience years
-function calculateTotalExperience(workExperience: any[]): number {
-  if (!workExperience || workExperience.length === 0) return 0
-  
-  let totalMonths = 0
-  const currentDate = new Date()
-  
-  workExperience.forEach(exp => {
-    if (exp.startDate) {
-      const startDate = new Date(exp.startDate)
-      const endDate = exp.isCurrent ? currentDate : (exp.endDate ? new Date(exp.endDate) : currentDate)
-      
-      if (startDate && endDate && endDate > startDate) {
-        const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                          (endDate.getMonth() - startDate.getMonth())
-        totalMonths += monthsDiff
-      }
-    }
-  })
-  
-  return Math.round(totalMonths / 12 * 10) / 10 // Round to 1 decimal
-}
-
-// Enhanced validation function for MVP requirements
-function validateParsedData(data: ParsedCVData, mvpData?: any): {
-  isValid: boolean
-  missingFields: string[]
-  suggestions: string[]
-  completionPercentage: number
-} {
-  const missingFields: string[] = []
-  const suggestions: string[] = []
-  const totalRequiredFields = 11 // Total MVP required field categories
-  let completedFields = 0
-
-  // Check required personal information
-  if (!data.personal.email) {
-    missingFields.push('email')
-    suggestions.push('Please ensure your email address is clearly visible in the CV')
-  } else completedFields++
-
-  if (!data.personal.name) {
-    missingFields.push('name')
-    suggestions.push('Please ensure your full name appears at the top of the CV')
-  } else completedFields++
-
-  if (!data.personal.phone) {
-    missingFields.push('phone')
-    suggestions.push('Please include your phone number in the contact information')
-  } else completedFields++
-
-  // Check MVP required fields
-  if (!mvpData?.title) {
-    missingFields.push('title')
-    suggestions.push('Please select your professional title/position')
-  } else completedFields++
-
-  if (!mvpData?.availability) {
-    missingFields.push('availability')
-    suggestions.push('Please specify your availability status')
-  } else completedFields++
-
-  if (!data.personal.portfolio && !data.personal.linkedin) {
-    missingFields.push('portfolio_url')
-    suggestions.push('Please provide your portfolio URL or LinkedIn profile')
-  } else completedFields++
-
-  if (!data.personal.summary) {
-    missingFields.push('professional_summary')
-    suggestions.push('Please add a professional summary')
-  } else completedFields++
-
-  if (!mvpData?.totalExperienceYears && calculateTotalExperience(data.workExperience) === 0) {
-    missingFields.push('total_experience_years')
-    suggestions.push('Please specify your total years of experience')
-  } else completedFields++
-
-  // Check work experience with industry
-  if (data.workExperience.length === 0) {
-    missingFields.push('work_experience')
-    suggestions.push('Please include your work experience with company names and industries')
-  } else {
-    const hasIndustry = data.workExperience.some(exp => exp.industry)
-    if (!hasIndustry) {
-      missingFields.push('work_experience_industry')
-      suggestions.push('Please specify the industry for your work experiences')
-    } else completedFields++
-  }
-
-  // Check skills with proficiency
-  const totalSkills = (data.skills.technical?.length || 0) + 
-                     (data.skills.design?.length || 0) + 
-                     (data.skills.tools?.length || 0)
-  
-  if (totalSkills === 0) {
-    missingFields.push('skills')
-    suggestions.push('Please include your skills with proficiency levels')
-  } else {
-    // Check if skills have proficiency levels
-    const hasSkillProficiency = mvpData?.skillsProficiency && Object.keys(mvpData.skillsProficiency).length > 0
-    if (!hasSkillProficiency) {
-      missingFields.push('skills_proficiency')
-      suggestions.push('Please rate your proficiency level for each skill (1-5 scale)')
-    } else completedFields++
-  }
-
-  // Check languages with proficiency
-  if (!data.skills.languages || data.skills.languages.length === 0) {
-    missingFields.push('languages')
-    suggestions.push('Please include your language skills with proficiency levels')
-  } else {
-    const hasLanguageProficiency = mvpData?.languagesProficiency && Object.keys(mvpData.languagesProficiency).length > 0
-    if (!hasLanguageProficiency) {
-      missingFields.push('languages_proficiency')
-      suggestions.push('Please rate your proficiency level for each language (1-5 scale)')
-    } else completedFields++
-  }
-
-  const completionPercentage = Math.round((completedFields / totalRequiredFields) * 100)
-
-  return {
-    isValid: missingFields.length === 0,
-    missingFields,
-    suggestions,
-    completionPercentage
-  }
-}
+// Note: Validation logic moved to @/lib/validation/profile-validation.ts
 
 interface ParsingResultsProps {
   parsedData: ParsedCVData
@@ -181,7 +35,7 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject }
   const [localData, setLocalData] = useState<ParsedCVData>(parsedData)
   
   // MVP required fields state
-  const [mvpData, setMvpData] = useState({
+  const [mvpData, setMvpData] = useState<MVPData>({
     title: '',
     availability: 'Available',
     totalExperienceYears: calculateTotalExperience(parsedData.workExperience),
@@ -189,7 +43,7 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject }
     languagesProficiency: {} as Record<string, number>
   })
 
-  const validation = validateParsedData(localData, mvpData)
+  const validation: ValidationResult = validateProfileCompletion(localData, mvpData)
   const confidenceColor = localData.confidence > 0.7 ? 'text-green-600' : 
                          localData.confidence > 0.4 ? 'text-yellow-600' : 'text-red-600'
 
@@ -202,11 +56,10 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject }
     onDataUpdate(updated)
   }
 
-  const updateMvpData = (field: string, value: any) => {
+  const updateMvpData = (field: string, value: string | number | Record<string, number>) => {
     const updated = { ...mvpData, [field]: value }
     setMvpData(updated)
-    // Also update the main data structure for consistency
-    onDataUpdate({ ...localData, mvpData: updated })
+    // Note: MVP data is separate from ParsedCVData, handled in component state
   }
 
   const addWorkExperience = () => {

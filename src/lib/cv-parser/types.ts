@@ -16,6 +16,7 @@ export interface ParsedCVData {
   workExperience: Array<{
     jobTitle?: string
     company?: string
+    industry?: string
     location?: string
     startDate?: string
     endDate?: string

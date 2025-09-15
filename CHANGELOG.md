@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real-time profile completion progress bar with percentage tracking
 - Enhanced validation system covering all MVP required fields
 - Visual indicators for missing required fields with red borders and error messages
+- **VALIDATION SYSTEM OVERHAUL**: Centralized validation infrastructure in /src/lib/validation/
+- Comprehensive TypeScript types for MVP data and validation results
+- Weighted completion calculation with configurable importance levels
+- Field-specific validation with context-aware error messages
+- Reusable validation utilities for email, phone, URL, and proficiency validation
+- Profile completion status tracking with detailed breakdown by category
+- Fixed validation bugs and improved accuracy of completion percentage calculation
 
 ### Changed
 - **MAJOR UPDATE**: Revised Phase 1 implementation plan in TECHNICAL_APPROACH.md based on existing test CV parser functionality
@@ -35,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added comprehensive error handling and fallbacks in middleware for Supabase operations
 - Environment variable validation in middleware to prevent deployment crashes
 - Database query timeouts in middleware with 3-second timeout limits
+- **LinkedIn URL Validation**: Enhanced URL validation to accept LinkedIn URLs without protocol (e.g., www.linkedin.com/in/username), added specific LinkedIn pattern matching, improved validation error messages
 
 ## [0.3.0] - 2025-09-11
 

@@ -77,8 +77,8 @@ export async function middleware(request: NextRequest) {
     try {
       const { data, error } = await Promise.race([
         supabase.auth.getUser(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-      ]) as any
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+      ])
 
       if (error) {
         console.error('Error getting user:', error)
@@ -120,8 +120,8 @@ export async function middleware(request: NextRequest) {
             .select('role')
             .eq('id', user.id)
             .single(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 3000))
-        ]) as any
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 3000))
+        ])
 
         if (error) {
           console.error('Error fetching user role:', error)
