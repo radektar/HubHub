@@ -11,8 +11,38 @@ import type {
   WorkExperienceInsert,
   SkillInsert,
   LanguageInsert,
-  EducationInsert
+  // EducationInsert // Unused import
 } from '@/types/profile-completion.types'
+
+// Helper function to parse date strings and handle special cases like "Present"
+function parseDateString(dateStr?: string): string | null {
+  if (!dateStr) return null
+  
+  // Handle "Present", "Current", etc.
+  const lowerStr = dateStr.toLowerCase().trim()
+  if (lowerStr === 'present' || lowerStr === 'current' || lowerStr === 'now') {
+    return null
+  }
+  
+  // Try to parse the date
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) {
+      // If direct parsing fails, try some common formats
+      const cleanStr = dateStr.replace(/[^\w\s]/g, ' ').trim()
+      const parsedDate = new Date(cleanStr)
+      if (isNaN(parsedDate.getTime())) {
+        console.warn(`Could not parse date: ${dateStr}`)
+        return null
+      }
+      return parsedDate.toISOString().split('T')[0] // Return YYYY-MM-DD format
+    }
+    return date.toISOString().split('T')[0] // Return YYYY-MM-DD format
+  } catch (error) {
+    console.warn(`Error parsing date: ${dateStr}`, error)
+    return null
+  }
+}
 
 export async function POST(request: NextRequest) {
   console.log('🚀 Profile Completion API called')
@@ -86,19 +116,57 @@ export async function POST(request: NextRequest) {
         portfolio_url: portfolioUrl,
         cv_file_url: profileData.cvFileUrl || '',
         professional_summary: profileData.personal.summary || '',
-        total_experience_years: profileData.mvpData.totalExperienceYears,
+        total_experience_years: Math.round(profileData.mvpData.totalExperienceYears),
         location: profileData.personal.location,
         is_profile_complete: validationResult.isValid
       }
       
-      const { data: profileResult, error: profileError } = await supabase
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
         .from('designer_profiles')
-        .upsert(designerProfileData, { onConflict: 'user_id' })
         .select('id')
+        .eq('user_id', user.id)
         .single()
       
+      let profileResult
+      let profileError
+      
+      if (existingProfile) {
+        // Update existing profile (exclude user_id from update)
+        const { user_id, ...updateData } = designerProfileData
+        const { data, error } = await supabase
+          .from('designer_profiles')
+          .update(updateData)
+          .eq('user_id', user.id)
+          .select('id')
+          .single()
+        profileResult = data
+        profileError = error
+        console.log('🔄 Updated existing profile:', existingProfile.id)
+      } else {
+        // Create new profile
+        const { data, error } = await supabase
+          .from('designer_profiles')
+          .insert(designerProfileData)
+          .select('id')
+          .single()
+        profileResult = data
+        profileError = error
+        console.log('✨ Created new profile')
+      }
+      
       if (profileError) {
-        throw new Error(`Profile creation failed: ${profileError.message}`)
+        console.error('❌ Profile operation failed:', {
+          error: profileError,
+          data: designerProfileData,
+          userId: user.id,
+          isUpdate: !!existingProfile
+        })
+        throw new Error(`Profile ${existingProfile ? 'update' : 'creation'} failed: ${profileError.message}`)
+      }
+      
+      if (!profileResult) {
+        throw new Error('Profile creation failed - no result returned')
       }
       
       const profileId = profileResult.id
@@ -109,26 +177,33 @@ export async function POST(request: NextRequest) {
         supabase.from('work_experiences').delete().eq('designer_profile_id', profileId),
         supabase.from('skills').delete().eq('designer_profile_id', profileId),
         supabase.from('languages').delete().eq('designer_profile_id', profileId),
-        supabase.from('educations').delete().eq('designer_profile_id', profileId)
+        supabase.from('educations').delete().eq('designer_profile_id', profileId) // Corrected: 'educations' is the actual table name
       ])
       
       // 3. Insert work experiences with industry categorization
       if (profileData.workExperience && profileData.workExperience.length > 0) {
         const workExperiences: WorkExperienceInsert[] = profileData.workExperience
           .filter(exp => exp.company && exp.industry) // Only include entries with required MVP fields
-          .map(exp => ({
-            designer_profile_id: profileId,
-            job_title: exp.jobTitle,
-            company_name: exp.company!,
-            industry: exp.industry,
-            location: exp.location,
-            start_date: exp.startDate,
-            end_date: exp.endDate,
-            is_current: exp.isCurrent || false,
-            description: exp.description,
-            achievements: exp.achievements || [],
-            technologies_used: exp.technologies || []
-          }))
+          .map(exp => {
+            // Parse dates properly - handle "Present" and other date formats
+            const startDate = parseDateString(exp.startDate)
+            const endDate = parseDateString(exp.endDate)
+            const isCurrent = Boolean(exp.isCurrent || (exp.endDate && exp.endDate.toLowerCase().includes('present')))
+            
+            return {
+              designer_profile_id: profileId,
+              job_title: exp.jobTitle,
+              company_name: exp.company!,
+              industry: exp.industry,
+              location: exp.location,
+              start_date: startDate || undefined,
+              end_date: isCurrent ? undefined : (endDate || undefined), // Set end_date to undefined if current position
+              is_current: isCurrent,
+              description: exp.description,
+              achievements: exp.achievements || [],
+              technologies_used: exp.technologies || []
+            }
+          })
         
         if (workExperiences.length > 0) {
           const { error: workError } = await supabase
@@ -224,20 +299,22 @@ export async function POST(request: NextRequest) {
       
       // 6. Insert education (optional)
       if (profileData.education && profileData.education.length > 0) {
-        const educationToInsert: EducationInsert[] = profileData.education.map(edu => ({
+        const educationToInsert = profileData.education.map(edu => ({
           designer_profile_id: profileId,
           institution_name: edu.institution,
           degree_type: edu.degree,
           field_of_study: undefined, // Not in current parsing structure
-          start_date: edu.startDate,
-          end_date: edu.endDate,
-          gpa: edu.gpa ? parseFloat(edu.gpa) : undefined,
-          honors: edu.honors || [],
-          relevant_coursework: edu.relevantCoursework || []
+          start_date: parseDateString(edu.startDate) || undefined,
+          end_date: parseDateString(edu.endDate) || undefined,
+          additional_info: {
+            gpa: edu.gpa,
+            honors: edu.honors || [],
+            relevant_coursework: edu.relevantCoursework || []
+          }
         }))
         
         const { error: educationError } = await supabase
-          .from('educations')
+          .from('educations') // Corrected: 'educations' is the actual table name
           .insert(educationToInsert)
         
         if (educationError) {

@@ -80,7 +80,12 @@ export default function DashboardPage() {
                 <CardDescription>Complete and manage your designer profile</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">Edit Profile</Button>
+                <Button 
+                  className="w-full"
+                  onClick={() => router.push('/designer/profile')}
+                >
+                  Edit Profile
+                </Button>
               </CardContent>
             </Card>
             <Card>

@@ -2,47 +2,57 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 import { useAuthStore } from '@/stores/auth-store'
-import { signUpSchema, SignUpFormData } from '@/lib/validations/auth'
 
 export function SignUpForm() {
   const router = useRouter()
   const { signUp, loading, error, clearError } = useAuthStore()
-  const [showPassword] = useState(false)
-  const [showConfirmPassword] = useState(false)
+  
+  // Simple state - no complex form validation
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [role, setRole] = useState<'designer' | 'client' | 'admin'>('designer')
+  const [localError, setLocalError] = useState<string | null>(null)
 
-  const form = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-      confirmPassword: '',
-      role: undefined,
-      acceptTerms: false,
-    },
-  })
-
-  const onSubmit = async (data: SignUpFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     clearError()
+    setLocalError(null)
+
+    // Basic client-side validation only
+    if (!email || !password) {
+      setLocalError('Email and password are required')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match')
+      return
+    }
+
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters')
+      return
+    }
+
+    // Simple registration - no complex validation
     const result = await signUp({
-      email: data.email,
-      password: data.password,
-      role: data.role,
+      email,
+      password,
+      role,
     })
     
     if (result.success) {
-      router.push('/auth/verify-email')
+      router.push('/dashboard')
     }
   }
 
@@ -55,137 +65,80 @@ export function SignUpForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      {...field}
-                      disabled={loading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {(localError || error?.message) && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-md text-sm">
+              {localError || error?.message}
+            </div>
+          )}
 
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>I am a...</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="designer">Designer</SelectItem>
-                      <SelectItem value="client">Client</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email" // HTML5 validation only
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              required // HTML5 validation
             />
-            
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a password"
-                      {...field}
-                      disabled={loading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="role">I am a...</Label>
+            <Select value={role} onValueChange={(value: 'designer' | 'client' | 'admin') => setRole(value)} disabled={loading}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="designer">Designer</SelectItem>
+                <SelectItem value="client">Client</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+              minLength={6} // HTML5 validation
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirm your password"
-                      {...field}
-                      disabled={loading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+              required
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="acceptTerms"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="h-4 w-4 mt-1"
-                      disabled={loading}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <Label className="text-sm">
-                      I accept the{' '}
-                      <Link href="/terms" className="text-primary hover:underline">
-                        Terms of Service
-                      </Link>{' '}
-                      and{' '}
-                      <Link href="/privacy" className="text-primary hover:underline">
-                        Privacy Policy
-                      </Link>
-                    </Label>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
-                {error.message}
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
-            </Button>
-          </form>
-        </Form>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create account'}
+          </Button>
+        </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link href="/auth/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
+      <CardFooter className="text-center text-sm text-gray-600">
+        Already have an account?{' '}
+        <Link href="/auth/login" className="text-blue-600 hover:underline">
+          Sign in
+        </Link>
       </CardFooter>
     </Card>
   )

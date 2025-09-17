@@ -1,0 +1,20 @@
+# HubHub Cursor Workspace Rules
+
+## Script Organization Rule
+- **NEVER create SQL scripts (.sql files) in the main project folder**
+- **ALL SQL scripts must be placed in the `scripts/` directory**
+- This includes debug scripts, migration scripts, test scripts, and any other SQL files
+- Exception: Migration files belong in `supabase/migrations/` directory
+
+## File Organization
+- Keep the main project folder clean of temporary or debug files
+- Use appropriate subdirectories for different types of files:
+  - SQL scripts → `scripts/`
+  - Migrations → `supabase/migrations/`
+  - Documentation → main folder (only if permanent)
+  - Test files → appropriate test directories
+
+## Development Workflow
+- When creating database debugging or setup scripts, always place them in `scripts/`
+- Use descriptive names for scripts to indicate their purpose
+- Clean up temporary scripts after debugging is complete

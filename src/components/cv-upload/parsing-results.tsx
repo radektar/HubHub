@@ -30,9 +30,11 @@ interface ParsingResultsProps {
   onReject: () => void
   cvFileUrl?: string // Optional CV file URL for saving to database
   showSaveButton?: boolean // Whether to show the save to database button
+  isEditMode?: boolean // Whether this is editing existing profile vs new CV upload
+  initialMvpData?: Partial<MVPData> // Initial MVP data for edit mode
 }
 
-export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, cvFileUrl, showSaveButton = false }: ParsingResultsProps) {
+export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, cvFileUrl, showSaveButton = false, isEditMode = false, initialMvpData }: ParsingResultsProps) {
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [localData, setLocalData] = useState<ParsedCVData>(parsedData)
   const [isSaving, setIsSaving] = useState(false)
@@ -40,11 +42,11 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, 
   
   // MVP required fields state
   const [mvpData, setMvpData] = useState<MVPData>({
-    title: '',
-    availability: 'Available',
-    totalExperienceYears: calculateTotalExperience(parsedData.workExperience),
-    skillsProficiency: {} as Record<string, number>,
-    languagesProficiency: {} as Record<string, number>
+    title: initialMvpData?.title || '',
+    availability: initialMvpData?.availability || 'Available',
+    totalExperienceYears: initialMvpData?.totalExperienceYears || calculateTotalExperience(parsedData.workExperience),
+    skillsProficiency: initialMvpData?.skillsProficiency || {} as Record<string, number>,
+    languagesProficiency: initialMvpData?.languagesProficiency || {} as Record<string, number>
   })
 
   const validation: ValidationResult = validateProfileCompletion(localData, mvpData)
@@ -757,7 +759,7 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, 
       {/* Action Buttons */}
       <div className="flex justify-between">
         <Button variant="outline" onClick={onReject}>
-          Start Over
+          {isEditMode ? 'Cancel' : 'Start Over'}
         </Button>
         <div className="flex gap-2">
           {showSaveButton && (
@@ -775,7 +777,7 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, 
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Save to Database
+                  {isEditMode ? 'Update Profile' : 'Save to Database'}
                 </>
               )}
             </Button>
@@ -785,7 +787,7 @@ export function ParsingResults({ parsedData, onDataUpdate, onConfirm, onReject, 
             disabled={!validation.isValid}
             className="min-w-[120px]"
           >
-            Confirm & Save
+            {isEditMode ? 'Save Changes' : 'Confirm & Save'}
           </Button>
         </div>
       </div>

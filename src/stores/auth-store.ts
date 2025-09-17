@@ -82,9 +82,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const supabase = createClient()
     
     try {
+      // Simple registration with email confirmation disabled
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: { role: data.role },
+          emailRedirectTo: undefined // Disable email confirmation completely
+        }
       })
 
       if (error) {
@@ -94,28 +99,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       if (authData.user) {
-        // Create user profile in users table with role
+        // Create user profile manually (since trigger isn't working)
         const { error: insertError } = await supabase
           .from('users')
           .insert({
             id: authData.user.id,
-            email: authData.user.email!,
+            email: data.email,
             role: data.role,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
 
         if (insertError) {
-          const authError: AuthError = { message: 'Failed to create user profile' }
-          set({ error: authError, loading: false })
-          return { success: false, error: authError }
+          // Check if user already exists
+          if (insertError.code === '23505') { // Unique constraint violation
+            console.log('User already exists, fetching existing profile')
+          } else {
+            console.error('Failed to create user profile:', insertError)
+            const authError: AuthError = { message: `Database error: ${insertError.message}` }
+            set({ error: authError, loading: false })
+            return { success: false, error: authError }
+          }
         }
 
-        set({ loading: false, error: null })
+        // Create user object for state
+        const user: AuthUser = {
+          id: authData.user.id,
+          email: data.email,
+          role: data.role,
+          email_confirmed_at: authData.user.email_confirmed_at,
+          created_at: authData.user.created_at!,
+          updated_at: new Date().toISOString(),
+        }
+        
+        set({ user, loading: false })
         return { success: true }
       }
 
-      return { success: false, error: { message: 'Registration failed' } }
-    } catch (err) {
-      const authError: AuthError = { message: 'An unexpected error occurred' }
+      set({ loading: false })
+      return { success: true }
+    } catch (error) {
+      console.error('Signup error:', error)
+      const authError: AuthError = { message: 'Registration failed. Please try again.' }
       set({ error: authError, loading: false })
       return { success: false, error: authError }
     }

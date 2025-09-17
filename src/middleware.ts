@@ -72,22 +72,22 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    // Get user session with timeout and error handling
+    // Get user session with improved timeout and error handling
     let user = null
     try {
       const { data, error } = await Promise.race([
         supabase.auth.getUser(),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 8000))
       ])
 
       if (error) {
-        console.error('Error getting user:', error)
+        console.warn('Middleware: Auth error (non-critical):', error.message)
       } else {
         user = data?.user
       }
     } catch (error) {
-      console.error('Auth check failed:', error)
-      // Continue without user authentication for now
+      console.warn('Middleware: Auth check timeout (continuing without auth):', error instanceof Error ? error.message : 'Unknown error')
+      // Continue without user authentication - this is acceptable for public routes
     }
 
     const { pathname } = request.nextUrl
@@ -120,7 +120,7 @@ export async function middleware(request: NextRequest) {
             .select('role')
             .eq('id', user.id)
             .single(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 3000))
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 6000))
         ])
 
         if (error) {

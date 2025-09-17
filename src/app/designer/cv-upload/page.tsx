@@ -276,7 +276,7 @@ export default function CVUploadPage() {
               Access denied. Designer role required.
             </p>
             <p className="text-center text-sm text-gray-500 mt-2">
-              Current role: "{user?.role}" (type: {typeof user?.role})
+              Current role: &quot;{user?.role}&quot; (type: {typeof user?.role})
             </p>
             <p className="text-center text-sm text-gray-500">
               User ID: {user?.id}
