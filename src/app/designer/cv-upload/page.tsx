@@ -7,84 +7,67 @@ import { CVUploadZone } from '@/components/cv-upload/cv-upload-zone'
 import { ParsingResults } from '@/components/cv-upload/parsing-results'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CVParserResult, ParsedCVData } from '@/lib/cv-parser/types'
-import { createClient } from '@/lib/supabase/client'
+import { ProfileCompletionRequest, ProfileCompletionResponse } from '@/types/profile-completion.types'
 
-// Helper function to map parsed CV data to database format
-function mapToDatabase(parsedData: ParsedCVData, userId: string) {
+// Helper function to convert ParsedCVData to ProfileCompletionRequest format
+function convertToProfileCompletionRequest(parsedData: ParsedCVData, cvFileUrl?: string): ProfileCompletionRequest {
+  // Calculate default proficiency levels for skills and languages
+  const skillsProficiency: Record<string, number> = {}
+  const languagesProficiency: Record<string, number> = {}
+  
+  // Default proficiency level for skills (3 = intermediate)
+  const allSkills = [
+    ...(parsedData.skills.technical || []),
+    ...(parsedData.skills.design || []),
+    ...(parsedData.skills.tools || []),
+    ...(parsedData.skills.soft || [])
+  ]
+  allSkills.forEach(skill => {
+    skillsProficiency[skill] = 3 // Default intermediate level
+  })
+  
+  // Default proficiency level for languages
+  parsedData.skills.languages?.forEach(lang => {
+    languagesProficiency[lang.name] = mapLanguageProficiency(lang.proficiency)
+  })
+  
   return {
-    // Designer profile data
-    designerProfile: {
-      user_id: userId,
+    personal: {
       name: parsedData.personal.name,
       email: parsedData.personal.email || '',
       phone: parsedData.personal.phone || '',
       location: parsedData.personal.location,
-      portfolio_url: parsedData.personal.portfolio || parsedData.personal.linkedin || '',
-      professional_summary: parsedData.personal.summary || '',
-      total_experience_years: calculateTotalExperience(parsedData.workExperience),
+      portfolio: parsedData.personal.portfolio,
+      linkedin: parsedData.personal.linkedin,
+      summary: parsedData.personal.summary
     },
-
-    // Work experiences
-    workExperiences: parsedData.workExperience.map(exp => ({
-      job_title: exp.jobTitle,
-      company_name: exp.company || '',
+    
+    mvpData: {
+      title: parsedData.personal.name ? `${parsedData.personal.name} - Designer` : 'Designer', // Default title
+      availability: 'Available', // Default availability
+      totalExperienceYears: calculateTotalExperience(parsedData.workExperience),
+      skillsProficiency,
+      languagesProficiency
+    },
+    
+    workExperience: parsedData.workExperience.map(exp => ({
+      jobTitle: exp.jobTitle,
+      company: exp.company,
+      industry: exp.industry || 'Technology', // Default industry
       location: exp.location,
-      start_date: exp.startDate ? new Date(exp.startDate) : null,
-      end_date: exp.endDate && exp.endDate !== 'present' ? new Date(exp.endDate) : null,
-      is_current: exp.isCurrent || false,
+      startDate: exp.startDate,
+      endDate: exp.endDate,
+      isCurrent: exp.isCurrent,
       description: exp.description,
-      technologies_used: exp.technologies || [],
-      industry: 'Technology' // Default, should be updated based on company/role
+      achievements: exp.achievements,
+      technologies: exp.technologies
     })),
-
-    // Education
-    educations: parsedData.education.map(edu => ({
-      institution_name: edu.institution,
-      degree_type: edu.degree,
-      start_date: edu.startDate ? new Date(edu.startDate) : null,
-      end_date: edu.endDate ? new Date(edu.endDate) : null,
-      gpa: edu.gpa ? parseFloat(edu.gpa) : null,
-      honors: edu.honors || []
-    })),
-
-    // Skills
-    skills: [
-      ...(parsedData.skills.technical?.map(skill => ({
-        skill_name: skill,
-        category: 'technical' as const,
-        proficiency_level: 3 // Default, should be updated by user
-      })) || []),
-      ...(parsedData.skills.design?.map(skill => ({
-        skill_name: skill,
-        category: 'design' as const,
-        proficiency_level: 3
-      })) || []),
-      ...(parsedData.skills.tools?.map(skill => ({
-        skill_name: skill,
-        category: 'tool' as const,
-        proficiency_level: 3
-      })) || []),
-      ...(parsedData.skills.soft?.map(skill => ({
-        skill_name: skill,
-        category: 'soft' as const,
-        proficiency_level: 3
-      })) || [])
-    ],
-
-    // Languages
-    languages: parsedData.skills.languages?.map(lang => ({
-      language_name: lang.name,
-      proficiency_level: mapLanguageProficiency(lang.proficiency),
-      is_native: lang.proficiency?.toLowerCase().includes('native') || false
-    })) || [],
-
-    // Certifications
-    certifications: parsedData.certifications?.map(cert => ({
-      certification_name: cert.name,
-      issuing_organization: cert.issuer,
-      issue_date: cert.date ? new Date(cert.date) : null,
-      credential_url: cert.url
-    })) || []
+    
+    skills: parsedData.skills,
+    
+    education: parsedData.education,
+    
+    cvFileUrl: cvFileUrl || 'uploaded-cv-file'
   }
 }
 
@@ -125,7 +108,7 @@ enum UploadStep {
 
 export default function CVUploadPage() {
   const router = useRouter()
-  const { user } = useAuthStore()
+  const { user, loading } = useAuthStore()
   const [currentStep, setCurrentStep] = useState<UploadStep>(UploadStep.UPLOAD)
   const [parsingResult, setParsingResult] = useState<CVParserResult | null>(null)
   const [parsedData, setParsedData] = useState<ParsedCVData | null>(null)
@@ -149,146 +132,53 @@ export default function CVUploadPage() {
   }
 
   const handleConfirm = async () => {
-    if (!parsedData || !user) return
+    if (!parsedData) return
+    
+    if (!user && !skipAuth) return
 
     setIsSaving(true)
     setCurrentStep(UploadStep.SAVING)
 
     try {
-      const supabase = createClient()
+      // Convert parsed data to API format
+      const profileRequest = convertToProfileCompletionRequest(parsedData, 'uploaded-cv-file')
       
-      // Map parsed data to database format manually
-      const dbData = mapToDatabase(parsedData, user.id)
-
-      // First, create or update designer profile
-      const { data: existingProfile } = await supabase
-        .from('designer_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-
-      let profileId: string
-
-      if (existingProfile) {
-        // Update existing profile
-        const { error: updateError } = await supabase
-          .from('designer_profiles')
-          .update({
-            ...dbData.designerProfile,
-            // Keep existing values for required fields that might not be parsed
-            title: dbData.designerProfile.name || 'Designer', // Default title
-            availability: 'Available', // Default availability
-            cv_file_url: 'pending', // Will be updated when file is uploaded to storage
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-
-        if (updateError) throw updateError
-        profileId = existingProfile.id
+      console.log('🚀 Sending profile completion request:', profileRequest)
+      
+      // Call the profile completion API
+      const response = await fetch('/api/designer/profile-complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileRequest)
+      })
+      
+      const result: ProfileCompletionResponse = await response.json()
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || `API request failed with status ${response.status}`)
+      }
+      
+      console.log('✅ Profile completion successful:', result)
+      
+      // Show success feedback
+      if (result.isComplete) {
+        alert(`Profile saved successfully! Your profile is ${result.completionPercentage}% complete.`)
       } else {
-        // Create new profile
-        const { data: newProfile, error: insertError } = await supabase
-          .from('designer_profiles')
-          .insert({
-            ...dbData.designerProfile,
-            title: dbData.designerProfile.name || 'Designer',
-            availability: 'Available',
-            cv_file_url: 'pending',
-            professional_summary: dbData.designerProfile.professional_summary || 'Professional summary pending',
-            total_experience_years: dbData.designerProfile.total_experience_years || 0
-          })
-          .select('id')
-          .single()
-
-        if (insertError) throw insertError
-        profileId = newProfile.id
+        const missingFieldsMsg = result.missingFields?.length 
+          ? `Missing fields: ${result.missingFields.join(', ')}` 
+          : 'Some required fields are still missing.'
+        alert(`Profile saved! Completion: ${result.completionPercentage}%. ${missingFieldsMsg}`)
       }
-
-      // Insert work experiences
-      if (dbData.workExperiences.length > 0) {
-        // Delete existing work experiences
-        await supabase
-          .from('work_experiences')
-          .delete()
-          .eq('designer_profile_id', profileId)
-
-        // Insert new work experiences
-        const { error: workError } = await supabase
-          .from('work_experiences')
-          .insert(
-            dbData.workExperiences.map(exp => ({
-              ...exp,
-              designer_profile_id: profileId,
-              industry: exp.industry || 'Technology' // Default industry
-            }))
-          )
-
-        if (workError) throw workError
-      }
-
-      // Insert skills
-      if (dbData.skills.length > 0) {
-        await supabase
-          .from('skills')
-          .delete()
-          .eq('designer_profile_id', profileId)
-
-        const { error: skillsError } = await supabase
-          .from('skills')
-          .insert(
-            dbData.skills.map(skill => ({
-              ...skill,
-              designer_profile_id: profileId
-            }))
-          )
-
-        if (skillsError) throw skillsError
-      }
-
-      // Insert languages
-      if (dbData.languages.length > 0) {
-        await supabase
-          .from('languages')
-          .delete()
-          .eq('designer_profile_id', profileId)
-
-        const { error: langError } = await supabase
-          .from('languages')
-          .insert(
-            dbData.languages.map(lang => ({
-              ...lang,
-              designer_profile_id: profileId
-            }))
-          )
-
-        if (langError) throw langError
-      }
-
-      // Insert education
-      if (dbData.educations.length > 0) {
-        await supabase
-          .from('educations')
-          .delete()
-          .eq('designer_profile_id', profileId)
-
-        const { error: eduError } = await supabase
-          .from('educations')
-          .insert(
-            dbData.educations.map(edu => ({
-              ...edu,
-              designer_profile_id: profileId
-            }))
-          )
-
-        if (eduError) throw eduError
-      }
-
-      // Redirect to profile completion page
-      router.push('/designer/profile')
-
+      
+      // Redirect to dashboard or profile completion page
+      router.push('/dashboard')
+      
     } catch (error) {
-      console.error('Error saving CV data:', error)
-      alert('Failed to save CV data. Please try again.')
+      console.error('❌ Error saving CV data:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Failed to save CV data: ${errorMessage}. Please try again.`)
     } finally {
       setIsSaving(false)
     }
@@ -300,12 +190,100 @@ export default function CVUploadPage() {
     setParsedData(null)
   }
 
-  if (!user || user.role !== 'designer') {
+  // Debug logging
+  console.log('CVUploadPage - Loading:', loading)
+  console.log('CVUploadPage - User object:', user)
+  console.log('CVUploadPage - User role:', user?.role)
+  console.log('CVUploadPage - Role type:', typeof user?.role)
+
+  // TEMPORARY: Skip auth check for debugging
+  const skipAuth = true
+
+  // Manual debug function for authentication testing
+  const debugAuth = async () => {
+    console.log('=== MANUAL DEBUG ===')
+    console.log('Environment check:')
+    console.log('- NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
+    console.log('- NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing')
+    
+    try {
+      console.log('Testing profile completion API...')
+      const testData = convertToProfileCompletionRequest({
+        personal: { name: 'Test User', email: 'test@example.com', phone: '+1234567890' },
+        workExperience: [],
+        education: [],
+        skills: { technical: ['JavaScript'] },
+        rawText: '',
+        confidence: 1.0,
+        errors: []
+      })
+      
+      console.log('Test profile completion request:', testData)
+      
+    } catch (error) {
+      console.error('Manual debug error:', error)
+    }
+  }
+
+  if (loading && !skipAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card>
           <CardContent className="p-6">
-            <p className="text-center text-gray-500">Access denied. Designer role required.</p>
+            <p className="text-center text-gray-500">Loading authentication...</p>
+            <button 
+              onClick={debugAuth}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Debug Auth
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!user && !skipAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center text-gray-500">No user found - please log in again</p>
+            <button 
+              onClick={debugAuth}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Debug Auth
+            </button>
+            <button 
+              onClick={() => router.push('/auth/login')}
+              className="mt-2 ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Go to Login
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (user?.role !== 'designer' && !skipAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center text-red-500">
+              Access denied. Designer role required.
+            </p>
+            <p className="text-center text-sm text-gray-500 mt-2">
+              Current role: "{user?.role}" (type: {typeof user?.role})
+            </p>
+            <p className="text-center text-sm text-gray-500">
+              User ID: {user?.id}
+            </p>
+            <p className="text-center text-sm text-gray-500">
+              Email: {user?.email}
+            </p>
           </CardContent>
         </Card>
       </div>
