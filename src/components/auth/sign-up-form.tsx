@@ -44,7 +44,7 @@ export function SignUpForm() {
       return
     }
 
-    // Simple registration - no complex validation
+    // Registration with email confirmation
     const result = await signUp({
       email,
       password,
@@ -52,6 +52,14 @@ export function SignUpForm() {
     })
     
     if (result.success) {
+      // Check if user needs to confirm email
+      if (result.error?.message && result.error.message.includes('confirmation link')) {
+        // Show success message for email confirmation
+        setLocalError(null)
+        // You could show a success state here instead of an error
+        alert('Registration successful! Please check your email and click the confirmation link to activate your account.')
+        return
+      }
       router.push('/dashboard')
     }
   }

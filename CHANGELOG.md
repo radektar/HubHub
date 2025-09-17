@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- **EMAIL CONFIRMATION SYSTEM**: Fixed email confirmation to work on Vercel production instead of localhost
+- **VERCEL DEPLOYMENT CONFIGURATION**: Fixed runtime errors and environment variable configuration for production deployment
 
 ### Changed
 

@@ -82,13 +82,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const supabase = createClient()
     
     try {
-      // Simple registration with email confirmation disabled
+      // Registration with email confirmation enabled
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: { role: data.role },
-          emailRedirectTo: undefined // Disable email confirmation completely
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`
         }
       })
 
@@ -99,6 +99,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       if (authData.user) {
+        // Check if email confirmation is required
+        if (!authData.user.email_confirmed_at) {
+          // User needs to confirm email before proceeding
+          set({ loading: false, error: null })
+          return { 
+            success: true, 
+            error: { message: 'Please check your email and click the confirmation link to activate your account.' }
+          }
+        }
+
         // Create user profile manually (since trigger isn't working)
         const { error: insertError } = await supabase
           .from('users')
