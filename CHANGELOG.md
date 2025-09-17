@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- **EMAIL VERIFICATION IN PRODUCTION**: Fixed email verification URL handling to support both hash-based and query parameter formats from Supabase
+- **VERCEL DEPLOYMENT CONFIGURATION**: Added proper Vercel configuration for auth routes and improved production deployment
 - **EMAIL CONFIRMATION SYSTEM**: Fixed email confirmation to work on Vercel production instead of localhost
-- **VERCEL DEPLOYMENT CONFIGURATION**: Fixed runtime errors and environment variable configuration for production deployment
+- **NEXT.JS SUSPENSE BOUNDARY**: Fixed useSearchParams Suspense boundary error in verify-email page
 
 ### Changed
 

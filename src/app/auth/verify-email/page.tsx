@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -14,12 +14,63 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      const token = searchParams.get('token')
-      const type = searchParams.get('type')
+      // Handle both hash and query parameter formats
+      let tokenHash = searchParams.get('token_hash') || searchParams.get('token')
+      let type = searchParams.get('type')
+      let accessToken = searchParams.get('access_token')
+      let refreshToken = searchParams.get('refresh_token')
 
-      if (!token || type !== 'signup') {
+      // Check if parameters are in the URL hash (common for Supabase)
+      if (!tokenHash && typeof window !== 'undefined') {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        tokenHash = hashParams.get('token_hash') || hashParams.get('access_token')
+        type = hashParams.get('type')
+        accessToken = hashParams.get('access_token')
+        refreshToken = hashParams.get('refresh_token')
+      }
+
+      console.log('Verification parameters:', { tokenHash, type, accessToken, refreshToken })
+
+      // If we have access_token and refresh_token, the user is already verified
+      if (accessToken && refreshToken) {
+        const supabase = createClient()
+        
+        try {
+          // Set the session with the tokens
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+
+          if (error) {
+            console.error('Session setup error:', error)
+            setStatus('error')
+            setMessage(error.message || 'Failed to complete email verification.')
+            return
+          }
+
+          if (data.user) {
+            setStatus('success')
+            setMessage('Email verified successfully! You can now sign in to your account.')
+            
+            // Redirect to dashboard after 3 seconds
+            setTimeout(() => {
+              router.push('/dashboard')
+            }, 3000)
+          }
+          return
+        } catch (err) {
+          console.error('Session setup error:', err)
+          setStatus('error')
+          setMessage('An unexpected error occurred during verification.')
+          return
+        }
+      }
+
+      // Fallback to token_hash verification if no access tokens
+      if (!tokenHash || (type && type !== 'signup')) {
         setStatus('error')
-        setMessage('Invalid verification link. Please check your email for the correct link.')
+        setMessage('Invalid verification link. Please check your email for the correct link or request a new verification email.')
         return
       }
 
@@ -27,14 +78,22 @@ export default function VerifyEmailPage() {
 
       try {
         const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: token,
+          token_hash: tokenHash,
           type: 'signup'
         })
 
         if (error) {
           console.error('Email verification error:', error)
           setStatus('error')
-          setMessage(error.message || 'Failed to verify email. The link may have expired.')
+          
+          // Provide more specific error messages
+          if (error.message.includes('expired')) {
+            setMessage('The verification link has expired. Please request a new verification email.')
+          } else if (error.message.includes('invalid')) {
+            setMessage('Invalid verification link. Please check your email for the correct link.')
+          } else {
+            setMessage(error.message || 'Failed to verify email. Please try again.')
+          }
           return
         }
 
@@ -50,7 +109,7 @@ export default function VerifyEmailPage() {
       } catch (err) {
         console.error('Unexpected error:', err)
         setStatus('error')
-        setMessage('An unexpected error occurred. Please try again.')
+        setMessage('An unexpected error occurred. Please try again or contact support.')
       }
     }
 
@@ -88,24 +147,64 @@ export default function VerifyEmailPage() {
               <div className="text-red-600 text-lg">❌</div>
               <p className="text-sm text-gray-600">{message}</p>
               <div className="space-y-2">
-                <Button 
-                  onClick={() => router.push('/auth/register')} 
-                  variant="outline"
-                  className="w-full"
-                >
-                  Try Signing Up Again
-                </Button>
-                <Button 
-                  onClick={() => router.push('/auth/login')} 
-                  className="w-full"
-                >
-                  Go to Login
-                </Button>
+                {message.includes('expired') ? (
+                  <>
+                    <Button 
+                      onClick={() => router.push('/auth/register')} 
+                      className="w-full"
+                    >
+                      Request New Verification Email
+                    </Button>
+                    <Button 
+                      onClick={() => router.push('/auth/login')} 
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Try Signing In
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      onClick={() => router.push('/auth/register')} 
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Try Signing Up Again
+                    </Button>
+                    <Button 
+                      onClick={() => router.push('/auth/login')} 
+                      className="w-full"
+                    >
+                      Go to Login
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Email Verification</CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
