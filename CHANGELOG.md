@@ -14,8 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **VERCEL DEPLOYMENT CONFIGURATION**: Added proper Vercel configuration for auth routes and improved production deployment
 - **EMAIL CONFIRMATION SYSTEM**: Fixed email confirmation to work on Vercel production instead of localhost
 - **NEXT.JS SUSPENSE BOUNDARY**: Fixed useSearchParams Suspense boundary error in verify-email page
+- **SECURITY VULNERABILITIES**: Updated Next.js from 15.5.2 to 15.5.9 to fix critical RCE vulnerabilities in React flight protocol, Server Actions source code exposure, and Denial of Service vulnerabilities
+- **DEPENDENCY SECURITY**: Fixed all npm audit vulnerabilities including tar, js-yaml, and mammoth packages
 
 ### Changed
+- **VERCEL CLI**: Updated Vercel CLI globally from v48.4.1 to v48.12.1 for improved deployment security and features
+
+### Security
+- **CRITICAL NEXT.JS UPDATE**: Patched critical RCE vulnerability (GHSA-9qr9-h5gf-34mp) in React flight protocol by updating to Next.js 15.5.9
+- **SERVER ACTIONS SECURITY**: Fixed Server Actions source code exposure vulnerability (GHSA-w37m-7fhw-fmv9)
+- **DOS PROTECTION**: Resolved Denial of Service vulnerability (GHSA-mwv6-3258-q52c) in Server Components
+- **DEPENDENCY SECURITY**: Updated tar package to fix arbitrary file overwrite and symlink poisoning vulnerabilities (GHSA-8qq5-rm4j-mr97)
+- **PROTOTYPE POLLUTION**: Fixed js-yaml prototype pollution vulnerability (GHSA-mh29-5h37-fv8m)
+- **DIRECTORY TRAVERSAL**: Updated mammoth package to fix directory traversal vulnerability (GHSA-rmjr-87wv-gf87)
 
 ## [0.4.0] - 2025-09-17
 
