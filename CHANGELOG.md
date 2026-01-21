@@ -8,8 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **DATABASE SETUP TOOLS**: Complete database setup scripts and documentation for Supabase configuration
+- **DATABASE CONNECTION TESTING**: Comprehensive test scripts for verifying Supabase connection and table structure
+- **ENVIRONMENT CONFIGURATION TEMPLATE**: Created .env.example template with detailed instructions for Supabase setup
+- **DATABASE RESTORATION GUIDES**: Complete guides and scripts for restoring database backups
+- **RLS POLICY FIXES**: Scripts to fix Row Level Security recursion issues
+- **USER REGISTRATION TRIGGER**: Fixed trigger function for automatic user profile creation on registration
 
 ### Fixed
+- **EMAIL VERIFICATION CODE PARAMETER**: Fixed email verification to properly handle `code` parameter from Supabase email links
+- **USER REGISTRATION DATABASE ERROR**: Removed manual user insertion that caused RLS policy violations, now relies on database trigger
+- **RLS INFINITE RECURSION**: Fixed infinite recursion in RLS policies by simplifying user role checks and using direct auth.uid() comparisons
+- **DATABASE CONNECTION**: Fixed database connection issues and verified all 16 tables are accessible
+- **TABLE NAME MISMATCH**: Fixed test script to use correct table name 'educations' instead of 'education'
 - **EMAIL VERIFICATION IN PRODUCTION**: Fixed email verification URL handling to support both hash-based and query parameter formats from Supabase
 - **VERCEL DEPLOYMENT CONFIGURATION**: Added proper Vercel configuration for auth routes and improved production deployment
 - **EMAIL CONFIRMATION SYSTEM**: Fixed email confirmation to work on Vercel production instead of localhost

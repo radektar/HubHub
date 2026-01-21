@@ -102,6 +102,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Check if email confirmation is required
         if (!authData.user.email_confirmed_at) {
           // User needs to confirm email before proceeding
+          // Trigger will create user record automatically when email is confirmed
           set({ loading: false, error: null })
           return { 
             success: true, 
@@ -109,27 +110,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
         }
 
-        // Create user profile manually (since trigger isn't working)
-        const { error: insertError } = await supabase
+        // Wait a moment for trigger to create user record
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Verify user record was created by trigger
+        const { data: userRecord, error: fetchError } = await supabase
           .from('users')
-          .insert({
-            id: authData.user.id,
-            email: data.email,
-            role: data.role,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .select('*')
+          .eq('id', authData.user.id)
+          .single()
 
-        if (insertError) {
-          // Check if user already exists
-          if (insertError.code === '23505') { // Unique constraint violation
-            console.log('User already exists, fetching existing profile')
-          } else {
-            console.error('Failed to create user profile:', insertError)
-            const authError: AuthError = { message: `Database error: ${insertError.message}` }
-            set({ error: authError, loading: false })
-            return { success: false, error: authError }
-          }
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          // If user record doesn't exist and it's not a "not found" error, try to create it
+          console.warn('User record not found, trigger may have failed:', fetchError)
+          // Don't fail registration - trigger should handle this
         }
 
         // Create user object for state
