@@ -71,14 +71,13 @@ function VerifyEmailContent() {
       }
 
       // Try code-based verification first (most common for Supabase email links)
+      // For code from redirect URL, use exchangeCodeForSession
       if (code) {
         const supabase = createClient()
         
         try {
-          const { data, error } = await supabase.auth.verifyOtp({
-            token: code,
-            type: 'signup'
-          })
+          // Exchange code for session (standard Supabase email verification flow)
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
           if (error) {
             console.error('Email verification error (code):', error)
