@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
       
       if (existingProfile) {
         // Update existing profile (exclude user_id from update)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { user_id, ...updateData } = designerProfileData
         const { data, error } = await supabase
           .from('designer_profiles')

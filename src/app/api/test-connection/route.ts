@@ -1,5 +1,5 @@
 // Simple Supabase connection test
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
@@ -7,7 +7,7 @@ export async function GET() {
     const supabase = await createClient()
     
     // Test basic connection by trying to query a simple table or system info
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('designer_profiles')
       .select('count(*)', { count: 'exact', head: true })
     

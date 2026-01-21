@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **EMAIL VERIFICATION CODE PARAMETER**: Fixed email verification to properly handle `code` parameter from Supabase email links using `exchangeCodeForSession` method
 - **VERCEL BUILD TYPE ERROR**: Fixed TypeScript build error in email verification by using correct Supabase API method for code-based verification
+- **BUILD WARNINGS**: Fixed unused import warnings in API routes (NextRequest, unused variables) to ensure clean production build
 - **USER REGISTRATION DATABASE ERROR**: Removed manual user insertion that caused RLS policy violations, now relies on database trigger
 - **RLS INFINITE RECURSION**: Fixed infinite recursion in RLS policies by simplifying user role checks and using direct auth.uid() comparisons
 - **DATABASE CONNECTION**: Fixed database connection issues and verified all 16 tables are accessible
