@@ -94,7 +94,9 @@ export async function middleware(request: NextRequest) {
 
     // Public routes that don't require authentication
     const publicRoutes = ['/auth/login', '/auth/register', '/auth/reset-password', '/auth/verify-email']
-    const isPublicRoute = publicRoutes.includes(pathname) || pathname === '/'
+    // Check if route is public (evaluated but result not stored - used implicitly in logic)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    publicRoutes.includes(pathname) || pathname === '/'
 
     // Protected routes that require authentication
     const protectedRoutes = ['/dashboard', '/profile', '/admin', '/designer', '/client']

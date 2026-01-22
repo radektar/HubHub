@@ -29,7 +29,9 @@ export class CVAnalyzer {
       const publications = this.extractPublications()
 
       const confidence = this.calculateConfidence(personal, workExperience, education, skills)
-      const processingTime = Date.now() - startTime
+      // Processing time tracked for potential future use (prefixed with _ to indicate intentionally unused)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _processingTime = Date.now() - startTime
 
       return {
         personal,

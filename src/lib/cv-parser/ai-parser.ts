@@ -392,14 +392,15 @@ Return valid JSON only:
     return certifications
   }
 
-  private extractProjects(text: string): Array<{
+  private extractProjects(_text: string): Array<{
     name: string
     description: string
     technologies: string[]
     url: string
   }> {
-    const projectsSection = text.match(/(?:PROJECTS|PORTFOLIO)\s*([\s\S]*?)(?=\n[A-Z\s]+\n|$)/i)?.[1] || ''
     // Basic project extraction - can be enhanced
+    // TODO: Implement project extraction from CV text
+    // Parameter prefixed with _ to indicate intentionally unused
     return []
   }
 

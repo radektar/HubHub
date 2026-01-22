@@ -21,7 +21,7 @@ interface AuthState {
   clearError: () => void
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
   error: null,
@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       return { success: false, error: { message: 'Authentication failed' } }
-    } catch (err) {
+    } catch {
       const authError: AuthError = { message: 'An unexpected error occurred' }
       set({ error: authError, loading: false })
       return { success: false, error: authError }
@@ -114,7 +114,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await new Promise(resolve => setTimeout(resolve, 500))
         
         // Verify user record was created by trigger
-        const { data: userRecord, error: fetchError } = await supabase
+        const { error: fetchError } = await supabase
           .from('users')
           .select('*')
           .eq('id', authData.user.id)
@@ -175,7 +175,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ loading: false, error: null })
       return { success: true }
-    } catch (err) {
+    } catch {
       const authError: AuthError = { message: 'An unexpected error occurred' }
       set({ error: authError, loading: false })
       return { success: false, error: authError }
@@ -199,7 +199,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ loading: false, error: null })
       return { success: true }
-    } catch (err) {
+    } catch {
       const authError: AuthError = { message: 'An unexpected error occurred' }
       set({ error: authError, loading: false })
       return { success: false, error: authError }

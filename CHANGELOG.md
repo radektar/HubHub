@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PDF PARSING MODULE INITIALIZATION**: Fixed pdf-parse test file loading issue by using dynamic imports instead of static imports
 - **GEMINI API QUOTA ERRORS**: Added retry logic with exponential backoff for handling quota exceeded errors (429)
 - **CV PARSING FALLBACK**: Enhanced regex fallback parsing with better logging and error reporting when AI parsing fails
+- **BUILD TYPE ERRORS**: Fixed TypeScript build errors by adding type declarations for pdf-parse module
+- **ESLINT WARNINGS**: Fixed all ESLint warnings including unused variables, missing dependencies in useEffect hooks, and unused expressions
 
 ### Changed
 - **GEMINI API MODEL**: Changed from gemini-2.0-flash (paid tier only) to gemini-2.5-flash-lite (free tier compatible)

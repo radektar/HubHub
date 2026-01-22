@@ -235,20 +235,11 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
     console.log('🔍 Starting PDF text extraction with pdf-parse...')
     
-    // Use direct import from lib to avoid test file loading issue
+    // Dynamic import to avoid pdf-parse test file loading issue at module initialization
     // pdf-parse tries to load './test/data/05-versions-space.pdf' at module init
-    // Workaround: import from lib/pdf-parse.js directly
-    let pdf
-    try {
-      // Try importing from lib first (avoids test file issue)
-      const pdfModule = await import('pdf-parse/lib/pdf-parse.js')
-      pdf = pdfModule.default || pdfModule
-    } catch (libError) {
-      // Fallback to regular import if lib path doesn't work
-      console.log('⚠️ Lib import failed, trying regular import...')
-      const pdfModule = await import('pdf-parse')
-      pdf = pdfModule.default || pdfModule
-    }
+    // Using dynamic import delays the module loading until runtime
+    const pdfModule = await import('pdf-parse')
+    const pdf = pdfModule.default || pdfModule
     
     // Extract text directly from buffer - no file system needed!
     const data = await pdf(buffer)

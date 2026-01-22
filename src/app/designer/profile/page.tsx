@@ -42,6 +42,7 @@ export default function DesignerProfilePage() {
     if (!loading && user) {
       loadExistingProfile()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading])
 
   const loadExistingProfile = async () => {
