@@ -1,14 +1,10 @@
 // API Route for CV Parsing - Server-side processing
 
 import { NextRequest, NextResponse } from 'next/server'
-import { promisify } from 'util'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as os from 'os'
 import { AIParser } from '@/lib/cv-parser/ai-parser'
 
-// Import PDF text extraction
-import pdfExtract from 'pdf-text-extract'
+// NOTE: pdf-parse is imported dynamically in extractTextFromPDF function
+// to avoid the test file loading issue at module initialization
 
 export async function POST(request: NextRequest) {
   console.log('🚀 CV Parse API called')
@@ -77,6 +73,19 @@ export async function POST(request: NextRequest) {
 
     console.log('📋 Text extracted, length:', extractedText.length)
 
+    // Check if we have any text to parse
+    if (!extractedText || extractedText.trim().length === 0) {
+      console.log('⚠️ No text extracted from file')
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Could not extract text from file. Please ensure the file contains readable text or try a different format (TXT).',
+          processingTime: 0
+        },
+        { status: 400 }
+      )
+    }
+
     // Use AI parsing if available, fallback to regex
     let parsedData
     let parsingMethod = 'regex'
@@ -88,9 +97,23 @@ export async function POST(request: NextRequest) {
         parsedData = await aiParser.parseWithFallback(extractedText)
         parsingMethod = 'ai'
       } else {
-        console.log('📝 Using enhanced regex parsing...')
-        const aiParser = new AIParser()
-        parsedData = (aiParser as unknown as { parseWithRegex: (text: string) => unknown }).parseWithRegex(extractedText)
+        console.log('📝 Using basic regex parsing (no AI key)...')
+        // Don't create AIParser when key is missing - use basic functions directly
+        parsedData = {
+          personal: {
+            name: extractName(extractedText),
+            email: extractEmail(extractedText),
+            phone: extractPhone(extractedText),
+            summary: extractSummary(extractedText)
+          },
+          workExperience: extractWorkExperience(extractedText),
+          skills: extractSkills(extractedText),
+          education: [],
+          projects: [],
+          languages: [],
+          certifications: []
+        }
+        parsingMethod = 'basic'
       }
     } catch (error) {
       console.error('⚠️ Advanced parsing failed, using basic parsing:', error)
@@ -207,40 +230,42 @@ function extractSkillCategory(text: string, category: string): string[] {
   return []
 }
 
-// PDF text extraction function using pdf-text-extract
+// PDF text extraction function using pdf-parse (works on Vercel/serverless)
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    console.log('🔍 Starting PDF text extraction...')
+    console.log('🔍 Starting PDF text extraction with pdf-parse...')
     
-    // Create temporary file
-    const tempDir = os.tmpdir()
-    const tempFilePath = path.join(tempDir, `cv-${Date.now()}.pdf`)
+    // Use direct import from lib to avoid test file loading issue
+    // pdf-parse tries to load './test/data/05-versions-space.pdf' at module init
+    // Workaround: import from lib/pdf-parse.js directly
+    let pdf
+    try {
+      // Try importing from lib first (avoids test file issue)
+      const pdfModule = await import('pdf-parse/lib/pdf-parse.js')
+      pdf = pdfModule.default || pdfModule
+    } catch (libError) {
+      // Fallback to regular import if lib path doesn't work
+      console.log('⚠️ Lib import failed, trying regular import...')
+      const pdfModule = await import('pdf-parse')
+      pdf = pdfModule.default || pdfModule
+    }
     
-    // Write buffer to temporary file
-    fs.writeFileSync(tempFilePath, buffer)
-    console.log('📁 Temporary PDF file created:', tempFilePath)
+    // Extract text directly from buffer - no file system needed!
+    const data = await pdf(buffer)
+    const extractedText = data.text || ''
     
-    // Extract text using pdf-text-extract
-    const extractPromise = promisify(pdfExtract)
-    const pages = await extractPromise(tempFilePath)
-    
-    // Clean up temporary file
-    fs.unlinkSync(tempFilePath)
-    console.log('🗑️ Temporary file cleaned up')
-    
-    const extractedText = Array.isArray(pages) ? pages.join('\n') : String(pages || '')
-    console.log('✅ PDF text extraction completed, length:', extractedText.length)
+    console.log('✅ PDF text extraction completed')
+    console.log('📊 PDF info - pages:', data.numpages, 'version:', data.version)
+    console.log('📝 Extracted text length:', extractedText.length)
     
     return extractedText.trim() || 'No text content found in PDF'
     
   } catch (error) {
     console.error('❌ PDF parsing error:', error)
-    
-    // Fallback: try to extract as raw text (won't work well but better than nothing)
-    const fallbackText = buffer.toString('utf8')
-    console.log('⚠️ Using fallback text extraction')
-    
-    return fallbackText || 'PDF parsing failed and fallback extraction returned no content'
+    // Return empty string instead of error message so AI can still process
+    // The error will be logged but won't break the flow
+    console.log('⚠️ PDF parsing failed, returning empty text for AI processing')
+    return ''
   }
 }
 

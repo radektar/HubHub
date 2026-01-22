@@ -17,11 +17,17 @@ export class AIParser {
   /**
    * Parse CV text using Gemini AI for intelligent data extraction
    */
-  async parseWithAI(rawText: string): Promise<ParsedCVData> {
+  async parseWithAI(rawText: string, retryCount = 0): Promise<ParsedCVData> {
+    const maxRetries = 3
+    const retryDelay = 2000 // 2 seconds base delay
+    
     try {
       console.log('🤖 Starting AI-powered CV parsing...')
       
-      const model = this.gemini.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      // Use gemini-2.5-flash-lite - lightweight model available in free tier (January 2026)
+      // Old models (1.0, 1.5) have been deprecated
+      const model = this.gemini.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+      console.log('📡 Using model: gemini-2.5-flash-lite')
       
       const prompt = this.buildStructuredPrompt(rawText)
       const result = await model.generateContent(prompt)
@@ -29,21 +35,41 @@ export class AIParser {
       const text = response.text()
       
       console.log('🧠 AI response received, parsing JSON...')
+      console.log('📝 Response length:', text.length)
       
       // Parse JSON response
       const jsonMatch = text.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
+        console.error('⚠️ No JSON found in response. Full response:', text.substring(0, 500))
         throw new Error('No valid JSON found in AI response')
       }
       
       const parsedData = JSON.parse(jsonMatch[0]) as ParsedCVData
       
       console.log('✅ AI parsing completed successfully')
+      console.log('📊 Parsed data summary:', {
+        name: parsedData.personal?.name || 'N/A',
+        email: parsedData.personal?.email || 'N/A',
+        workExp: parsedData.workExperience?.length || 0,
+        skills: Object.keys(parsedData.skills || {}).length
+      })
+      
       return parsedData
       
     } catch (error) {
-      console.error('❌ AI parsing failed:', error)
-      throw new Error(`AI parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      const isQuotaError = errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('Quota exceeded')
+      
+      // Retry on quota errors with exponential backoff
+      if (isQuotaError && retryCount < maxRetries) {
+        const delay = retryDelay * Math.pow(2, retryCount) // Exponential backoff
+        console.log(`⏳ Quota error detected. Retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+        return this.parseWithAI(rawText, retryCount + 1)
+      }
+      
+      console.error('❌ AI parsing failed:', errorMessage)
+      throw new Error(`AI parsing failed: ${errorMessage}`)
     }
   }
 
@@ -138,10 +164,21 @@ Return valid JSON only:
       // Try AI parsing first
       return await this.parseWithAI(rawText)
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.log('⚠️ AI parsing failed, using fallback regex extraction')
+      console.log('📋 Error details:', errorMessage.substring(0, 200))
+      console.log('📝 Text length for regex parsing:', rawText.length)
       
       // Fallback to improved regex parsing
-      return this.parseWithRegex(rawText)
+      const regexResult = this.parseWithRegex(rawText)
+      console.log('📊 Regex parsing results:', {
+        name: regexResult.personal?.name || 'N/A',
+        email: regexResult.personal?.email || 'N/A',
+        workExp: regexResult.workExperience?.length || 0,
+        skills: Object.keys(regexResult.skills || {}).length
+      })
+      
+      return regexResult
     }
   }
 

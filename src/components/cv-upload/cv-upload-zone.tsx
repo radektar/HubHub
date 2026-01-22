@@ -38,6 +38,25 @@ export function CVUploadZone({ onParsingComplete, onParsingStart, disabled }: CV
         body: formData
       })
 
+      // Check if response is OK before parsing JSON
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorMessage = `Server error (${response.status})`
+        
+        // Try to parse error as JSON if possible
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.error || errorMessage
+        } catch {
+          // If not JSON, use the text directly (truncate if too long)
+          errorMessage = errorText.length > 200 
+            ? `${errorText.substring(0, 200)}...` 
+            : errorText || errorMessage
+        }
+        
+        throw new Error(errorMessage)
+      }
+
       const result = await response.json()
 
       onParsingComplete(result)

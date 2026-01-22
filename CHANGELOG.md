@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **CV PARSING PDF EXTRACTION**: Fixed PDF parsing by replacing pdf-text-extract (requires system binary) with pdf-parse library that works on Vercel/serverless environments
+- **GEMINI API MODEL COMPATIBILITY**: Updated Gemini API model from deprecated gemini-1.5-flash to gemini-2.5-flash-lite (latest free tier model, January 2026)
+- **CV UPLOAD ERROR HANDLING**: Improved error handling in CV upload component to properly display API errors and handle non-JSON responses
+- **PDF PARSING MODULE INITIALIZATION**: Fixed pdf-parse test file loading issue by using dynamic imports instead of static imports
+- **GEMINI API QUOTA ERRORS**: Added retry logic with exponential backoff for handling quota exceeded errors (429)
+- **CV PARSING FALLBACK**: Enhanced regex fallback parsing with better logging and error reporting when AI parsing fails
+
+### Changed
+- **GEMINI API MODEL**: Changed from gemini-2.0-flash (paid tier only) to gemini-2.5-flash-lite (free tier compatible)
+- **PDF PARSING LIBRARY**: Migrated from pdf-text-extract to pdf-parse for better serverless compatibility
+
 ### Added
 - **DATABASE SETUP TOOLS**: Complete database setup scripts and documentation for Supabase configuration
 - **DATABASE CONNECTION TESTING**: Comprehensive test scripts for verifying Supabase connection and table structure
